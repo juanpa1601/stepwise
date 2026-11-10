@@ -1,0 +1,12 @@
+{
+  "name": "stepwise",
+  "owner": { "name": "juanpa1601", "url": "https://github.com/juanpa1601" },
+  "description": "Claude Code plugin for step-by-step feature delivery: spec, implement, check, audit and close.",
+  "plugins": [
+    {
+      "name": "stepwise",
+      "source": "./plugins/stepwise",
+      "description": "Step-by-step feature delivery with Claude Code: explore, test-runner and code-reviewer agents; spec, implement, check, audit and close skills; and safety hooks."
+    }
+  ]
+}

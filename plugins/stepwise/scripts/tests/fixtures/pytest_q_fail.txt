@@ -1,0 +1,77 @@
+..FEsxXF.F                                                               [100%]
+=================================== ERRORS ====================================
+________________________ ERROR at setup of test_error _________________________
+
+    @pytest.fixture
+    def broken():
+>       raise RuntimeError("fixture boom")
+E       RuntimeError: fixture boom
+
+tests\test_sample.py:20: RuntimeError
+================================== FAILURES ===================================
+__________________________________ test_fail __________________________________
+
+    def test_fail():
+>       assert 1 == 2
+E       assert 1 == 2
+
+tests\test_sample.py:15: AssertionError
+_________________________ TestGroup.test_method_fail __________________________
+
+self = <tests.test_sample.TestGroup object at 0x0000023C555CA0D0>
+
+    def test_method_fail(self):
+>       parse("nope")
+
+tests\test_sample.py:49:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\helpers.py:5: in parse
+    return json.loads(text)
+..\..\..\..\..\..\..\Python\pythoncore-3.14-64\Lib\json\__init__.py:352: in loads
+    return _default_decoder.decode(s)
+..\..\..\..\..\..\..\Python\pythoncore-3.14-64\Lib\json\decoder.py:345: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <json.decoder.JSONDecoder object at 0x0000023C55084050>, s = 'nope'
+idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+..\..\..\..\..\..\..\Python\pythoncore-3.14-64\Lib\json\decoder.py:363: JSONDecodeError
+___________________________ TestGroup.test_param[2] ___________________________
+
+self = <tests.test_sample.TestGroup object at 0x0000023C5556FBB0>, n = 2
+
+    @pytest.mark.parametrize("n", [1, 2])
+    def test_param(self, n):
+>       assert n == 1, "n must be 1"
+E       AssertionError: n must be 1
+E       assert 2 == 1
+
+tests\test_sample.py:53: AssertionError
+============================== warnings summary ===============================
+tests\test_sample.py:42
+  {ROOT}\tests\test_sample.py:42: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_sample.py::test_fail - assert 1 == 2
+FAILED tests/test_sample.py::TestGroup::test_method_fail - json.decoder.JSOND...
+FAILED tests/test_sample.py::TestGroup::test_param[2] - AssertionError: n mus...
+ERROR tests/test_sample.py::test_error - RuntimeError: fixture boom
+3 failed, 3 passed, 1 skipped, 1 deselected, 1 xfailed, 1 xpassed, 1 warning, 1 error in 0.23s

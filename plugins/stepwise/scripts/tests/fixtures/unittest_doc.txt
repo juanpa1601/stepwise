@@ -1,0 +1,15 @@
+F.
+======================================================================
+FAIL: test_documented (test_doc.DocCase.test_documented)
+Totals add up.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "{ROOT}\tests\test_doc.py", line 7, in test_documented
+    self.assertEqual(1, 2)
+    ~~~~~~~~~~~~~~~~^^^^^^
+AssertionError: 1 != 2
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.003s
+
+FAILED (failures=1)

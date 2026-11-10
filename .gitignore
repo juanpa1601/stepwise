@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Configuración local de Claude Code (nunca se versiona)
+.claude/settings.local.json
+
+# Secretos
+.env
+.env.*

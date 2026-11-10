@@ -1,0 +1,55 @@
+EF.sE
+======================================================================
+ERROR: test_errors (test_bad.BadCase.test_errors)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "{ROOT}\tests\test_bad.py", line 15, in test_errors
+    load("not json")
+    ~~~~^^^^^^^^^^^^
+  File "{ROOT}\tests\helpers.py", line 5, in load
+    return json.loads(text)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\user\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\user\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+======================================================================
+ERROR: test_stdlib_error (test_bad.BadCase.test_stdlib_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "{ROOT}\tests\test_bad.py", line 18, in test_stdlib_error
+    json.loads("{")
+    ~~~~~~~~~~^^^^^
+  File "C:\Users\user\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\user\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+
+======================================================================
+FAIL: test_fails (test_bad.BadCase.test_fails)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "{ROOT}\tests\test_bad.py", line 12, in test_fails
+    self.assertEqual("�and�", "nandu")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+AssertionError: '�and�' != 'nandu'
+- �and�
++ nandu
+
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.009s
+
+FAILED (failures=1, errors=2, skipped=1)

@@ -1,0 +1,88 @@
+FFFFFFF                                                                  [100%]
+================================== FAILURES ===================================
+________________________________ test_many[0] _________________________________
+
+n = 0
+
+    @pytest.mark.parametrize("n", range(7))
+    def test_many(n):
+>       assert n < 0, f"value {n}"
+E       AssertionError: value 0
+E       assert 0 < 0
+
+tests\test_many.py:6: AssertionError
+________________________________ test_many[1] _________________________________
+
+n = 1
+
+    @pytest.mark.parametrize("n", range(7))
+    def test_many(n):
+>       assert n < 0, f"value {n}"
+E       AssertionError: value 1
+E       assert 1 < 0
+
+tests\test_many.py:6: AssertionError
+________________________________ test_many[2] _________________________________
+
+n = 2
+
+    @pytest.mark.parametrize("n", range(7))
+    def test_many(n):
+>       assert n < 0, f"value {n}"
+E       AssertionError: value 2
+E       assert 2 < 0
+
+tests\test_many.py:6: AssertionError
+________________________________ test_many[3] _________________________________
+
+n = 3
+
+    @pytest.mark.parametrize("n", range(7))
+    def test_many(n):
+>       assert n < 0, f"value {n}"
+E       AssertionError: value 3
+E       assert 3 < 0
+
+tests\test_many.py:6: AssertionError
+________________________________ test_many[4] _________________________________
+
+n = 4
+
+    @pytest.mark.parametrize("n", range(7))
+    def test_many(n):
+>       assert n < 0, f"value {n}"
+E       AssertionError: value 4
+E       assert 4 < 0
+
+tests\test_many.py:6: AssertionError
+________________________________ test_many[5] _________________________________
+
+n = 5
+
+    @pytest.mark.parametrize("n", range(7))
+    def test_many(n):
+>       assert n < 0, f"value {n}"
+E       AssertionError: value 5
+E       assert 5 < 0
+
+tests\test_many.py:6: AssertionError
+________________________________ test_many[6] _________________________________
+
+n = 6
+
+    @pytest.mark.parametrize("n", range(7))
+    def test_many(n):
+>       assert n < 0, f"value {n}"
+E       AssertionError: value 6
+E       assert 6 < 0
+
+tests\test_many.py:6: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_many.py::test_many[0] - AssertionError: value 0
+FAILED tests/test_many.py::test_many[1] - AssertionError: value 1
+FAILED tests/test_many.py::test_many[2] - AssertionError: value 2
+FAILED tests/test_many.py::test_many[3] - AssertionError: value 3
+FAILED tests/test_many.py::test_many[4] - AssertionError: value 4
+FAILED tests/test_many.py::test_many[5] - AssertionError: value 5
+FAILED tests/test_many.py::test_many[6] - AssertionError: value 6
+7 failed in 0.18s

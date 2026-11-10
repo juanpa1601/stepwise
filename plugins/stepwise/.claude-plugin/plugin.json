@@ -1,0 +1,10 @@
+{
+  "name": "stepwise",
+  "version": "1.0.0",
+  "description": "Step-by-step feature delivery with Claude Code: explore, test-runner and code-reviewer agents; spec, implement, check, audit and close skills; the run_tests script; and the block_inplace_edits, block_env_access and ask_gh_api_writes hooks. Everything project-specific comes from ## Project commands in the project's CLAUDE.md.",
+  "author": { "name": "juanpa1601", "url": "https://github.com/juanpa1601" },
+  "homepage": "https://github.com/juanpa1601/stepwise",
+  "repository": "https://github.com/juanpa1601/stepwise",
+  "license": "MIT",
+  "keywords": ["workflow", "adr", "code-review", "tdd", "traceability"]
+}
