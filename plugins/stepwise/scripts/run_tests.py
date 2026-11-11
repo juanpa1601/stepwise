@@ -11,11 +11,13 @@ Claude Code's Bash tool (``-c``): on Windows ``CLAUDE_CODE_GIT_BASH_PATH`` (when
 ``sh.exe``, ``bash`` or ``sh``), else ``SHELL`` (an absolute path that exists), never ``bash`` from the ``PATH`` and
 never ``System32`` (WSL); elsewhere ``SHELL``, else ``/bin/sh``.
 
-The output (stdout and stderr together, read as UTF-8 with ``errors="replace"``) is parsed for pytest and unittest
-summaries. A value chained with ``&&`` gets one total per command (up to 6 commands, so the report fits in 10 lines;
-with more, one total and a note): summary k goes to command k. Any other runner gets
-its exit code and its last lines (``runner not recognized``). ``total`` is the runner's own (``Ran N tests``) or
-``passed + failed + errors + skipped + xfailed + xpassed``, without ``deselected`` or ``warnings``.
+The output (stdout and stderr together, read as UTF-8 with ``errors="replace"``) loses its ANSI codes (``ESC[`` +
+parameters + a letter) line by line, and is then parsed for pytest, unittest and Karma (``TOTAL: [<k> FAILED, ]<m>
+SUCCESS``, with the totals of the last ``Executed <x> of <y>`` line before it) summaries. A value chained with ``&&``
+gets one total per command (up to 6 commands, so the report fits in 10 lines; with more, one total and a note):
+summary k goes to command k. Any other runner gets its exit code and its last lines (``runner not recognized``).
+``total`` is the runner's own (``Ran N tests``, Karma's ``<y>``) or ``passed + failed + errors + skipped + xfailed +
+xpassed``, without ``deselected`` or ``warnings``.
 
 After ``--timeout`` seconds (570 by default, below the 600 s of a Bash call) the whole process tree is killed and the
 report says ``timeout after <N> s``. The script does not clean up containers or other resources of the stack.
@@ -62,7 +64,16 @@ _PYTEST_LOCATION: re.Pattern[str] = re.compile(r"(?P<path>(?:[A-Za-z]:)?[^:\s][^
 _PYTEST_SHORT: re.Pattern[str] = re.compile(r"(?:FAILED|ERROR) (?P<id>\S+)(?: - .*)?")
 _UNITTEST_HEADER: re.Pattern[str] = re.compile(r"(?:FAIL|ERROR): (?P<test>\S+) \((?P<dotted>[^)]+)\).*")
 _UNITTEST_FRAME: re.Pattern[str] = re.compile(r'  File "(?P<path>.+)", line (?P<line>\d+), in .*')
+_KARMA_TOTAL: re.Pattern[str] = re.compile(r"TOTAL: (?:(?P<failed>\d+) FAILED, )?(?P<success>\d+) SUCCESS")
+_KARMA_TIME: str = r"(?:\d+ mins? )?[0-9.]+ secs?"  # Karma's helper.formatTimeInterval
+_KARMA_EXECUTED: re.Pattern[str] = re.compile(
+    r"(?P<browser>.+?): Executed \d+ of (?P<total>\d+)(?: \((?P<failed>\d+) FAILED\))?(?: \(skipped (?P<skipped>\d+)\))?"
+    r"(?: SUCCESS)? \((?:(?P<mins>\d+) mins? )?(?P<secs>[0-9.]+) secs? / " + _KARMA_TIME + r"\)"
+)
+_KARMA_FRAME: re.Pattern[str] = re.compile(r"\s+at .*\((?P<path>[^()]+?):(?P<line>\d+):\d+\)")
+_URL_SCHEME: re.Pattern[str] = re.compile(r"[A-Za-z][\w+.-]+:")  # http:, webpack:; not a drive letter
 _FOREIGN_ABSOLUTE: re.Pattern[str] = re.compile(r"[A-Za-z]:[\\/]")
+_ANSI: re.Pattern[str] = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 
 
 @dataclass
@@ -231,6 +242,11 @@ def split_chain(command: str) -> list[str]:
     return [part for part in parts if part]
 
 
+def output_lines(output: str) -> list[str]:
+    """Return the lines of ``output`` without ANSI codes (``ESC[`` + parameters + a letter) or trailing spaces."""
+    return [_ANSI.sub("", line).rstrip() for line in output.splitlines()]
+
+
 def _clip(text: str) -> str:
     """Return ``text`` on one line of at most ``MAX_TEXT`` characters."""
     text = " ".join(text.split())
@@ -362,13 +378,44 @@ def unittest_failures(
     return result
 
 
+def karma_failures(
+    lines: list[str],
+    browser: str,
+    root: Path
+) -> list[str]:
+    """Return the failure lines of a Karma run (``lines`` ends with its summary), in output order: the test is the
+    line ``<browser> <test> FAILED``, the error its first detail line and the location its first frame in the
+    project, outside ``node_modules`` and without a URL scheme (a bundle served by Karma is not a project file)."""
+    result: list[str] = []
+    index: int = 0
+    while index < len(lines):
+        line: str = lines[index]
+        index += 1
+        if not (line.startswith(f"{browser} ") and line.endswith(" FAILED")):
+            continue
+        error: str = ""
+        location: tuple[str, str] | None = None
+        while index < len(lines) and lines[index][:1] in ("\t", " "):
+            detail: str = lines[index]
+            index += 1
+            frame: re.Match[str] | None = _KARMA_FRAME.fullmatch(detail)
+            if frame:
+                relative: str | None = None if _URL_SCHEME.match(frame["path"]) else project_path(frame["path"], root)
+                if relative and not location and not relative.startswith("node_modules/"):
+                    location = (relative, frame["line"])
+            elif not error and not detail.strip().startswith("at "):
+                error = detail.strip()
+        result.append(_failure(line[len(browser) + 1:-len(" FAILED")], location, error))
+    return result
+
+
 def summaries(
     output: str,
     root: Path
 ) -> list[Summary]:
-    """Return the pytest and unittest summaries of ``output``, in order, each with the failures printed after the
-    previous one."""
-    lines: list[str] = [line.rstrip() for line in output.splitlines()]
+    """Return the pytest, unittest and Karma summaries of ``output``, in order, each with the failures printed after
+    the previous one."""
+    lines: list[str] = output_lines(output)
     found: list[Summary] = []
     start: int = 0
     index: int = 0
@@ -376,6 +423,7 @@ def summaries(
         line: str = lines[index]
         pytest: re.Match[str] | None = _PYTEST_SUMMARY.fullmatch(line)
         ran: re.Match[str] | None = _UNITTEST_RAN.fullmatch(line)
+        karma: re.Match[str] | None = _KARMA_TOTAL.fullmatch(line)
         if pytest:
             counts: dict[str, int] = {}
             for part in re.findall(r"(\d+) (\w+)", pytest["counts"]):
@@ -405,6 +453,19 @@ def summaries(
                 found.append(summary)
                 start = end + 1
                 index = end
+        elif karma:
+            executed: re.Match[str] | None = None
+            for previous in lines[start:index]:  # the last progress line before the summary
+                executed = _KARMA_EXECUTED.fullmatch(previous) or executed
+            if executed:
+                seconds: str = executed["secs"]
+                if executed["mins"]:
+                    seconds = f"{int(executed['mins']) * 60 + float(seconds):.3f}".rstrip("0").rstrip(".")
+                summary = Summary(int(executed["total"]), int(executed["failed"] or 0), 0,
+                                  int(executed["skipped"] or 0), f"{seconds}s")
+                summary.failures = karma_failures(lines[start:index + 1], executed["browser"], root)
+                found.append(summary)
+                start = index + 1
         index += 1
     return found
 
@@ -500,7 +561,7 @@ def report(
     note: str = ""
     failures: list[str] = [line for summary in found for line in summary.failures]
     if not found and not timed_out:
-        last: list[str] = [line.rstrip()[:MAX_TEXT] for line in output.splitlines() if line.strip()]
+        last: list[str] = [line[:MAX_TEXT] for line in output_lines(output) if line.strip()]
         head += [f"Totals: not available (exit {code})", "Note: runner not recognized; last lines:"]
         room: int = MAX_LINES - len(head)
         return head + (last[-room:] if room > 0 else [])

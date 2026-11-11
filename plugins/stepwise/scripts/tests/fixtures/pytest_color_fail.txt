@@ -1,0 +1,13 @@
+{ESC}[32m.{ESC}[0m{ESC}[31mF{ESC}[0m{ESC}[31m                                                                       [100%]{ESC}[0m
+================================== FAILURES ===================================
+{ESC}[31m{ESC}[1m__________________________________ test_fail __________________________________{ESC}[0m
+
+    {ESC}[0m{ESC}[94mdef{ESC}[39;49;00m{ESC}[90m {ESC}[39;49;00m{ESC}[92mtest_fail{ESC}[39;49;00m():{ESC}[90m{ESC}[39;49;00m
+        value = {ESC}[94m1{ESC}[39;49;00m{ESC}[90m{ESC}[39;49;00m
+>       {ESC}[94massert{ESC}[39;49;00m value == {ESC}[94m2{ESC}[39;49;00m{ESC}[90m{ESC}[39;49;00m
+{ESC}[1m{ESC}[31mE       assert 1 == 2{ESC}[0m
+
+{ESC}[1m{ESC}[31mtests\test_color.py{ESC}[0m:7: AssertionError
+{ESC}[36m{ESC}[1m=========================== short test summary info ==========================={ESC}[0m
+{ESC}[31mFAILED{ESC}[0m tests/test_color.py::{ESC}[1mtest_fail{ESC}[0m - assert 1 == 2
+{ESC}[31m{ESC}[31m{ESC}[1m1 failed{ESC}[0m, {ESC}[32m1 passed{ESC}[0m{ESC}[31m in 0.34s{ESC}[0m{ESC}[0m
