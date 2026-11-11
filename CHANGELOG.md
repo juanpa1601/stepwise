@@ -6,6 +6,7 @@ Changes to the `stepwise` plugin. The format follows [Keep a Changelog](https://
 
 ### Added
 - **The optional `Prompts` key** in `## Project commands`: with it, `/spec` saves the exact request text to `<Prompts>/<YYYY-MM-DD>-spec.md` (or `-spec-step-<n>.md` for a new step), with a short header, in the same commit as the ADR, and the ADR links it from "Fuente / Documento". Without the key, nothing changes.
+- **Karma in `scripts/run_tests.py`**: it reads Karma's summary (`Totals:` with the skipped count, and `Failures:` with the test, its spec and the message), and it strips ANSI codes from every line before reading and reporting it, also in generic mode.
 
 ## [1.0.0] - 2026-11-09
 First public release.

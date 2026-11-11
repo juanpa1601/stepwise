@@ -1,0 +1,2 @@
+{ESC}[32m.{ESC}[0m{ESC}[32m.{ESC}[0m{ESC}[32m                                                                       [100%]{ESC}[0m
+{ESC}[32m{ESC}[32m{ESC}[1m2 passed{ESC}[0m{ESC}[32m in 0.09s{ESC}[0m{ESC}[0m
