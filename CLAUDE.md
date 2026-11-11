@@ -7,3 +7,4 @@
 - Base branch: main
 - Decision docs: docs/decisions/<feature>/business-rules.md
 - Traceability: docs/pull-requests/<feature>/step-<n>.md
+- Prompts: docs/prompts/<feature>/
