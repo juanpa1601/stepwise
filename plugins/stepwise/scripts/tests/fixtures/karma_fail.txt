@@ -1,0 +1,16 @@
+{ESC}[32m10 11 2026 14:38:57.176:INFO [karma-server]: {ESC}[39mKarma v6.4.4 server started at http://localhost:9876/
+{ESC}[32m10 11 2026 14:38:57.179:INFO [launcher]: {ESC}[39mLaunching browsers ChromeHeadless with concurrency unlimited
+{ESC}[32m10 11 2026 14:38:57.184:INFO [launcher]: {ESC}[39mStarting browser ChromeHeadless
+{ESC}[32m10 11 2026 14:38:57.743:INFO [Chrome Headless 157.0.0.0 (Windows 10)]: {ESC}[39mConnected on socket A93-oRp4P7sH4lC3AAAB with id 91430733
+Chrome Headless 157.0.0.0 (Windows 10): Executed 0 of 2{ESC}[32m SUCCESS{ESC}[39m (0 secs / 0 secs)
+{ESC}[1A{ESC}[2K{ESC}[31mChrome Headless 157.0.0.0 (Windows 10) tmp failing check fails on purpose FAILED{ESC}[39m
+	Expected 1 to be 2.
+	    at <Jasmine>
+	    at UserContext.apply (src/app/tmp-karma-capture/tmp-karma-fail.spec.ts:7:15)
+	    at _ZoneDelegate.invoke (node_modules/zone.js/fesm2015/zone.js:369:28)
+	    at ProxyZoneSpec.onInvoke (node_modules/zone.js/fesm2015/zone-testing.js:2081:39)
+	    at _ZoneDelegate.invoke (node_modules/zone.js/fesm2015/zone.js:368:34)
+Chrome Headless 157.0.0.0 (Windows 10): Executed 1 of 2{ESC}[31m (1 FAILED){ESC}[39m (0 secs / 0.003 secs)
+{ESC}[1A{ESC}[2KChrome Headless 157.0.0.0 (Windows 10): Executed 2 of 2{ESC}[31m (1 FAILED){ESC}[39m (0 secs / 0.004 secs)
+{ESC}[1A{ESC}[2KChrome Headless 157.0.0.0 (Windows 10): Executed 2 of 2{ESC}[31m (1 FAILED){ESC}[39m (0.008 secs / 0.004 secs)
+{ESC}[31mTOTAL: 1 FAILED, 1 SUCCESS{ESC}[39m

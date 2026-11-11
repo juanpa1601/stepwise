@@ -6,13 +6,13 @@
 > - Lo propio del proyecto (rutas, comandos, piezas locales) va en el prompt rellenado o en el `CLAUDE.md` del proyecto, nunca en las skills del plugin.
 > - Lo que no aplique se quita, con una línea que diga por qué.
 > - El contrato no se copia aquí: se enlaza el ADR `bootstrap` §3.4 y `plugins/stepwise/README.md`, que son los que cambian.
-> - **Anexos:** el Anexo A (perfiles por stack) da valores de partida para P1 y P2. En la copia se borra después de escribir R0. El Anexo B (fricción esperada en frontend) se queda en la copia de un proyecto frontend y se borra en uno backend.
+> - **Anexos:** el Anexo A (perfiles por stack) da valores de partida para P1 y P2. En la copia se borra después de escribir R0. El Anexo B (fricción esperada en frontend) se queda en la copia de un proyecto frontend y se borra en uno backend. El Anexo C (el contrato del script de `Tests (step)` para Angular con Karma) se queda solo en la copia de un proyecto Angular con Karma.
 
 **Conversación:** nueva, abierta en el clon de **<Proyecto>** (`<org>/<repo>`), en `<Base branch>` al día y con el árbol limpio.
 
 **Referencias** (en `juanpa1601/stepwise`, solo lectura):
 - `docs/decisions/bootstrap/business-rules.md`: §3.2 (reglas `ask`) y §3.4 (contrato `## Project commands`);
-- `plugins/stepwise/README.md`: claves opcionales (`Docs paths`), la línea `no files to check`, CA manuales y alineación del plugin;
+- `plugins/stepwise/README.md`: claves opcionales (`Docs paths` y `Prompts`), la línea `no files to check`, CA manuales y alineación del plugin;
 - `plugins/stepwise/references/ask-rules.json`: la lista vigente de reglas `ask`;
 - `docs/migration-template.md`: esta plantilla.
 
@@ -39,6 +39,7 @@ La sesión lanza `stepwise:explore` ("very thorough") sobre el clon y arma la ta
 - **Piezas locales:** agentes (`.claude/agents/`), skills (`.claude/skills/`), comandos (`.claude/commands/`), hooks (`.claude/hooks/` y sus entradas en `.claude/settings.json`), plantillas (`docs/templates/`) y copias para otras IA (`AGENTS.md`, `.agents/`, `GEMINI.md`). De cada una: si el plugin la reemplaza, si se queda o si lo decide `/spec`.
 - **Archivos de entorno:** cuáles hay (`.env`, `.env.*`, assets) y qué los carga. Ningún comando de `## Project commands` puede nombrarlos, porque `block_env_access` lo negaría. Se cargan por fuera del comando (`env_file`, `COMPOSE_ENV_FILES`, la configuración del runner).
 - **Restricciones del host:** Docker, SDK (Node, Flutter, navegador), Windows y Git Bash (`python3`, rutas largas, librerías que no corren en el host).
+  - **Versión del SDK:** antes de medir cualquier comando, se comprueba que la versión del SDK es compatible con la del framework: `npx ng version` en Angular, `flutter doctor` en Flutter. Si no lo es, la sesión se detiene y lo dice. En un proyecto Angular 18, Node 25.2.1 salió `(Unsupported)` (Angular 18 pide `^18.19.1 || ^20.11.1 || ^22`), y hubo que instalar Node 22 antes de medir.
 
 Los valores de partida por stack están en el Anexo A. Cada uno se mide igual: un perfil "sin verificar" no se copia sin correrlo.
 
@@ -104,6 +105,7 @@ Va antes de R3 para que la rama nunca quede sin protección: si los hooks locale
   "enabledPlugins": { "stepwise@stepwise": true }
   ```
   y en `permissions.ask` las reglas de `plugins/stepwise/references/ask-rules.json`, tal cual. Se conservan `env`, `permissions.allow` y los hooks locales (se van en R3). `settings.local.json` no se toca.
+- En el `env` de `.claude/settings.json`, `"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "500000"` (recomendado): se agrega si falta y se cambia si tiene otro valor, sin tocar el resto del `env`. El porqué está en el README de `stepwise`, "Configuration".
 - En `claude -p`, un `ask` del proyecto le gana a `--allowedTools`: se documenta en el README.
 - **README del proyecto, sección "Flujo con Claude Code":** `python3` en Git Bash (Windows); la instalación (`claude plugin marketplace add juanpa1601/stepwise` y `claude plugin install stepwise@stepwise`), con un enlace al README de `stepwise`; y reiniciar la sesión después de instalar.
 - Los cambios de `settings.json` se comprueban en una sesión nueva: no está comprobado que la sesión que lo escribe los recargue.
@@ -138,13 +140,15 @@ Al final de `/spec`, y otra vez después del último `/close`, la sesión respon
 
 ## Anexo A. Perfiles por stack
 Valores sugeridos para cada clave, **sin verificar en tu proyecto**: el inventario los corre una vez y los corrige. El perfil de Django con Docker es el que más se usó.
+- **Angular con Karma:** verificado en un proyecto Angular 18 con Karma (Windows con Git Bash). Es Angular standalone con `strictTemplates`, Jasmine y Karma sin `karma.conf.js`, ESLint 9 con `angular-eslint` y Node 22. Los tiempos entre paréntesis son de ese proyecto.
+- **Flutter y Angular con Jest:** siguen sin verificar hasta su primera migración real.
 
-| Clave | Django con Docker | Angular en el host | Flutter en el host |
+| Clave | Django con Docker | Angular con Karma en el host (verificado en un proyecto Angular 18 con Karma, Windows con Git Bash) | Flutter en el host (sin verificar) |
 |---|---|---|---|
-| `Tests (step)` | `docker compose run --rm test pytest` | `npx ng test --watch=false --browsers=ChromeHeadless --include` | `flutter test` |
-| `Tests (full)` | `docker compose run --rm test` | `npx ng test --watch=false --browsers=ChromeHeadless` | `flutter test` |
-| `Lint/format` | `docker compose run --rm test sh -c "ruff check . && isort --check-only ."`, o un lint en el host sobre los `*.py` del diff, con `no files to check` | `npx eslint . && npx prettier --check .` | `dart format --output=none --set-exit-if-changed . && flutter analyze` |
-| `Type check` | `docker compose run --rm test mypy .`, o `none` | `npx tsc --noEmit` | `none`: `flutter analyze` ya lo cubre |
+| `Tests (step)` | `docker compose run --rm test pytest` | `node scripts/test-step.mjs`, el script local del Anexo C, que pone un `--include` por ruta (2 rutas: 34 tests en 34 s) | `flutter test` |
+| `Tests (full)` | `docker compose run --rm test` | `npx ng test --watch=false --browsers=ChromeHeadless --progress=false` (519 tests en 106 s) | `flutter test` |
+| `Lint/format` | `docker compose run --rm test sh -c "ruff check . && isort --check-only ."`, o un lint en el host sobre los `*.py` del diff, con `no files to check` | `npx ng lint` con `angular-eslint` (13 s); `&& npx prettier --check .` solo si el proyecto usa Prettier (sin verificar) | `dart format --output=none --set-exit-if-changed . && flutter analyze` |
+| `Type check` | `docker compose run --rm test mypy .`, o `none` | `npx ngc -p tsconfig.app.json --noEmit && npx tsc --noEmit -p tsconfig.spec.json` (21 s + 17 s) | `none`: `flutter analyze` ya lo cubre |
 | `Migrations check` | `docker compose run --rm test python manage.py makemigrations --check --dry-run` | `none` | `none` |
 | `Base branch` | `<Base branch>` | `<Base branch>` | `<Base branch>` |
 | `Decision docs` | `docs/decisions/<feature>/business-rules.md` | igual | igual |
@@ -157,25 +161,58 @@ Notas por perfil:
   - `--build` va cuando la imagen no monta el código, porque si no `test-runner` da un verde falso. Ojo con el tiempo: el build cuenta para el timeout de 570 s.
   - Lo que importa GDAL no corre en el host en Windows: los tests van en Docker.
 - **Angular:**
-  - `stepwise:test-runner` agrega las rutas al final de `Tests (step)`, separadas por espacios. Por eso termina en `--include`. Con varias rutas, solo la primera queda en `--include` si el flag no acepta varios valores seguidos, y las demás se leerían como argumentos de `ng test` (Anexo B, caso 5). El plugin no parte las rutas: `/implement` hace una sola llamada con todas. Si el flag no los acepta, se anota en la "Fricción del plugin". Mientras tanto, el usuario pide a `/implement` una llamada a `test-runner` por ruta, o un glob entre comillas (o una carpeta).
-  - Si el proyecto usa Jest en lugar de Karma, `Tests (step)` es el comando de Jest, que recibe las rutas sin flag.
+  - **`Tests (step)`:** `stepwise:test-runner` agrega las rutas al final del comando, separadas por espacios, y `ng test` solo acepta varias rutas con el flag repetido (`--include a --include b`). Con `--include a b`, el comando entero falla (Anexo B, caso 5). Por eso el comando es el script del Anexo C, que repite `--include` por cada ruta.
+    - Un glob no sirve: `run_tests.py` solo acepta rutas que cumplen `[A-Za-z0-9_./:\[\]][A-Za-z0-9_./:\[\]-]*`, sin `*` ni `{}`.
+    - Una carpeta sí sirve: corre todos sus specs.
+  - **`Type check`:** `tsc --noEmit` no revisa las plantillas HTML. Con un componente de `template: '{{ doesNotExist }}'`, `tsc` salió con 0 y `ngc` con 1 (`TS2339: Property 'doesNotExist' does not exist`).
+    - Con `strictTemplates`, el chequeo real es `ngc` sobre `tsconfig.app.json`.
+    - Los specs no pasan por `ngc`, así que van con `tsc -p tsconfig.spec.json`.
+    - No se midió qué compila `npx tsc --noEmit` a secas, con un `tsconfig.json` raíz sin `files` ni `include`.
+  - **`Lint/format`:** `npx ng lint` respeta `angular.json` > `lint` > `lintFilePatterns` (por ejemplo, una sola carpeta de `src/app/`). `npx eslint .` lo ignora. No se midió `npx eslint .` sobre todo el repo.
+  - **`Tests (full)`:** `--progress=false` quita el progreso del build de Angular. Las líneas de progreso del reporter de Karma siguen saliendo, y `run_tests.py` les quita los códigos ANSI.
+  - Si el proyecto usa Jest en lugar de Karma, `Tests (step)` es el comando de Jest, que recibe las rutas sin flag (sin verificar).
 - **Flutter:**
   - `--output=none` hace que `dart format --set-exit-if-changed .` solo revise. Sin el flag, reescribe los archivos al correr el inventario, `/check` o `/close`, y ensucia el árbol.
   - `flutter test` recibe las rutas al final sin flag.
 
 ## Anexo B. Fricción esperada en frontend
-El plugin casi no se ha probado en proyectos frontend. El primero confirma cada caso y anota el resultado, confirmado o no, en la "Fricción del plugin" de la trazabilidad del paso en que aparezca.
+El primer proyecto frontend medido fue un proyecto Angular 18 con Karma (Windows con Git Bash). Ahí quedaron confirmados los casos 1, 3 y 5. Los casos 2 y 4 siguen sin probar en Angular, y ninguno se probó en Flutter ni con Jest. Cada proyecto nuevo confirma los casos que le tocan y anota el resultado, confirmado o no, en la "Fricción del plugin" de la trazabilidad del paso en que aparezca.
 
-1. **El `total` de `stepwise:test-runner` con runners que no son pytest ni unittest.** `run_tests.py` no tiene un parser para otros runners: da `Totals: not available (exit N)`, la nota `runner not recognized` y las últimas líneas de la salida. **Qué confirmar:** que el resultado se entiende en `/implement` y en `/check`, con un fallo y sin fallos. Ejemplos de resumen: Karma `Executed 12 of 12 SUCCESS`, Jest `Tests: 1 failed, 11 passed, 12 total`, `flutter test` `+12: All tests passed!`.
+1. **El `total` de `stepwise:test-runner` con runners que no son pytest ni unittest.**
+   - **Desde `1.1.0`:** `run_tests.py` lee pytest, unittest y Karma. Con Karma, `Totals:` y `Failures:` salen llenos (con los saltados de `(skipped N)`), y las líneas salen sin códigos ANSI.
+   - **Con cualquier otro runner:** da `Totals: not available (exit N)`, la nota `runner not recognized; last lines:` y las últimas líneas de la salida, sin códigos ANSI.
+   - **Confirmado con Karma, hasta `1.0.0`:** salía así. Las últimas líneas traían el resumen, pero con códigos ANSI (`ESC` es el carácter 0x1B) y con las líneas de progreso que Karma reescribe con `ESC[1A ESC[2K`. Sin fallos:
+     ```
+     ESC[1AESC[2KChrome Headless 157.0.0.0 (Windows 10): Executed 34 of 34ESC[32m SUCCESSESC[39m (0.258 secs / 0.229 secs)
+     ESC[32mTOTAL: 34 SUCCESSESC[39m
+     ```
+     Con un fallo salían `Executed 5 of 5 (1 FAILED)` y `TOTAL: 1 FAILED, 4 SUCCESS`, más el nombre del test (`... tmp failing check fails on purpose FAILED`), el mensaje y `at UserContext.apply (src/app/tmp-failing.spec.ts:3:15)`.
+   - **Sin verificar:** si `--reporters=dots` u otro reporter deja una salida más limpia sin perder el resumen.
+   - **Qué confirmar con otros runners:** que `Totals:` coincide con el resumen del runner en `/implement` y en `/check`, con un fallo y sin fallos. Por ejemplo, Jest `Tests: 1 failed, 11 passed, 12 total` o `flutter test` `+12: All tests passed!`.
 2. **`block_env_access` con un `.env` que Flutter carga como asset.** El hook niega `.env` y `.env.*` en Read, Grep, Glob, Edit, Write, Bash y PowerShell, también en un comando que solo los nombra. Permite las plantillas (`.env.example`, `.env.sample`, `.env.template`, `.env.dist`), y no ve lo que `flutter test` o `flutter run` leen por dentro. **Qué confirmar:**
    - si `pubspec.yaml` lo declara como asset y los tests lo necesitan;
    - qué tareas del agente quedan negadas;
    - si basta una plantilla.
    La copia `cp .env.example .env` la hace el usuario.
-3. **Chrome headless en Windows.** **Qué confirmar:**
-   - que `ng test --browsers=ChromeHeadless` encuentra Chrome desde Git Bash, sin abrir ventana y en menos de 570 s;
-   - si hace falta `CHROME_BIN` o un launcher en `karma.conf.js`. Esa configuración va fuera del comando y de los archivos de entorno.
+3. **Chrome headless en Windows.** **Confirmado en un proyecto Angular 18 con Karma:**
+   - `ng test --browsers=ChromeHeadless` encontró Chrome desde Git Bash sin `CHROME_BIN`, sin `karma.conf.js` y sin abrir ventana. La suite completa tardó 106 s, lejos de los 570 s del timeout de `run_tests.py`;
+   - `run_tests.py` encontró el shell. En Bash, `SHELL` vale `/bin/bash.exe`, pero Python lo recibe convertido por MSYS a `C:\Program Files\Git\bin\bash.exe`, una ruta absoluta que existe.
+
+   Si otro proyecto necesita `CHROME_BIN` o un launcher en `karma.conf.js`, esa configuración va fuera del comando y de los archivos de entorno.
 4. **CA de UI sin test automático.** Un CA visual o de interacción sin un test razonable va como `(manual: <motivo>)`. Lo propone `/spec`, lo aprueba el usuario, `/implement` lo registra en `### Verificación manual` y `code-reviewer` no lo marca `blocker`. **Qué confirmar:** que el flujo funciona así en un paso de UI, y si conviene cubrir con tests de widget o e2e lo que hoy queda manual.
-5. **Varias rutas en `Tests (step)` de Angular.** `test-runner` agrega las rutas separadas por espacios después de `--include`. **Qué confirmar:**
-   - si `ng test --include a b` corre los dos archivos, o si hace falta un glob entre comillas (sin comillas, Git Bash lo expande y vuelven las varias rutas);
-   - si no corre los dos, se anota en la "Fricción del plugin", porque el plugin hace una sola llamada con todas las rutas. Mientras tanto, el usuario pide a `/implement` una llamada a `test-runner` por ruta, o un glob entre comillas (o una carpeta).
+5. **Varias rutas en `Tests (step)` de Angular.** `test-runner` agrega las rutas separadas por espacios al final del comando. **Confirmado que falla en un proyecto Angular 18 con Karma:**
+   - `ng test --watch=false --browsers=ChromeHeadless --include a b` sale con 1 en 2 s: `Error: Unknown arguments: watch, browsers, include`. La segunda ruta se lee como argumento posicional e invalida todo el comando;
+   - `--include a --include b` corre los dos (4 + 6 = 10 tests), y `--include <carpeta>` corre todos los specs de la carpeta;
+   - un glob no sirve con `test-runner`, porque `run_tests.py` rechaza `*` y `{}` en las rutas.
+
+   **Solución:** el script del Anexo C como `Tests (step)`. Se verificó con el `run_tests.py step` del plugin: 1 spec y 1 carpeta dieron 34 tests y salida 0.
+
+## Anexo C. Script de `Tests (step)` para Angular con Karma
+Vive en el proyecto, nunca en el plugin: el plugin no trae piezas por stack. Este anexo da solo su contrato; cada proyecto escribe el suyo, por ejemplo `scripts/test-step.mjs`, y lo declara como `- Tests (step): node scripts/test-step.mjs`.
+
+**Contrato:**
+- resuelve `@angular/cli/bin/ng.js` con `createRequire` y lo lanza con `process.execPath`, sin shell;
+- corre `ng test --watch=false --browsers=ChromeHeadless --progress=false` y agrega un `--include <ruta>` por cada argumento, que puede ser un spec o una carpeta;
+- rechaza un argumento que empieza con `-` y termina con 2;
+- termina con 2 si no recibe rutas;
+- propaga el código de salida de `ng test`.

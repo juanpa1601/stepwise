@@ -2,7 +2,10 @@
 
 The fixtures are real outputs of pytest 8.2.2 and unittest (Python 3.14, Windows), captured from sample suites; the
 root of each capture is written as ``{ROOT}``, and ``emit.py`` puts the temporary project's root in its place, so
-the frames of the capture fall inside the project the script reads.
+the frames of the capture fall inside the project the script reads. ``karma_*.txt`` are real outputs of Karma 6.4.4
+(Angular 18.2.8, CLI 18.2.9, Chrome Headless 157, Windows), from temporary specs. The ``ESC`` byte of an ANSI code is
+written as ``{ESC}`` (``karma_*.txt``, and ``pytest_color_*.txt``: ``--color=yes`` and its plain pair, from the same
+suite), and ``emit.py`` puts the byte back.
 
 Standard library only (``unittest``). From the root of this repository::
 
@@ -28,7 +31,7 @@ EMIT: str = """import os
 import sys
 from pathlib import Path
 
-data = Path(sys.argv[1]).read_bytes().replace(b"{ROOT}", os.getcwd().encode("utf-8"))
+data = Path(sys.argv[1]).read_bytes().replace(b"{ROOT}", os.getcwd().encode("utf-8")).replace(b"{ESC}", b"\\x1b")
 for arg in sys.argv[3:]:
     if arg.startswith("log="):
         with open(arg[4:], "a", encoding="utf-8") as log:
@@ -95,6 +98,10 @@ class ProjectCase(unittest.TestCase):
 
     def tearDown(self) -> None:
         self._tmp.cleanup()
+
+    def assert_no_escape(self, lines: list[str]) -> None:
+        """Fail when any report line holds the ``ESC`` byte."""
+        self.assertFalse([line for line in lines if "\x1b" in line], lines)
 
     def contract(self, **commands: str) -> None:
         """Write ``CLAUDE.md`` with ``## Project commands`` and the given keys (``step``, ``full``, ``output``)."""
@@ -245,6 +252,160 @@ class GenericTests(ProjectCase):
         ])
         self.assertEqual(lines[-2:], ["Tests:       1 failed, 2 passed, 3 total", "Time:        1.2 s"])
         self.assertEqual(code, 3)
+
+
+class AnsiTests(ProjectCase):
+    """ANSI codes are removed before parsing and before reporting."""
+
+    ANSI: str = (
+        "\x1b[32mstarting\x1b[39m\n"
+        "\x1b[1A\x1b[2KProgress: 1 of 2\n"
+        "\x1b[2K\n"
+        "\x1b[31mDone with errors\x1b[39m\n"
+    )
+
+    def test_generic_mode_without_escape(self) -> None:
+        (self.root / "ansi.txt").write_text(self.ANSI, encoding="utf-8")
+        self.contract(full=emit("ansi.txt", 3))
+        lines, code = self.run_script("full")
+        self.assertEqual(lines, [
+            f"Command: {emit('ansi.txt', 3)}",
+            "Totals: not available (exit 3)",
+            "Note: runner not recognized; last lines:",
+            "starting",
+            "Progress: 1 of 2",
+            "Done with errors",
+        ])
+        self.assertEqual(code, 3)
+
+    def test_pytest_color_green(self) -> None:
+        self.contract(full=emit("pytest_color_pass.txt"))
+        lines, code = self.run_script("full")
+        self.assert_no_escape(lines)
+        self.assertEqual(lines[1:], ["Totals: 2 total, 0 failed, 0 errors, 0 skipped in 0.09s", "Failures: none"])
+        self.assertEqual(code, 0)
+        self.contract(full=emit("pytest_color_pass_plain.txt"))
+        plain, _ = self.run_script("full")
+        self.assertEqual(plain[1:], ["Totals: 2 total, 0 failed, 0 errors, 0 skipped in 0.08s", "Failures: none"])
+
+    def test_pytest_color_failure(self) -> None:
+        expected: list[str] = [
+            "Failures:",
+            "- tests/test_color.py::test_fail — tests/test_color.py:7: assert 1 == 2",
+        ]
+        self.contract(full=emit("pytest_color_fail.txt", 1))
+        lines, code = self.run_script("full")
+        self.assert_no_escape(lines)
+        self.assertEqual(lines[1:], ["Totals: 2 total, 1 failed, 0 errors, 0 skipped in 0.34s", *expected])
+        self.assertEqual(code, 1)
+        self.contract(full=emit("pytest_color_fail_plain.txt", 1))
+        plain, _ = self.run_script("full")
+        self.assertEqual(plain[1:], ["Totals: 2 total, 1 failed, 0 errors, 0 skipped in 0.27s", *expected])
+
+
+class KarmaTests(ProjectCase):
+    """Karma summaries, its failures and lines that only look like them."""
+
+    def variant(
+        self,
+        name: str,
+        old: str,
+        new: str
+    ) -> str:
+        """Write ``variant.txt``: the fixture ``name`` with ``old`` replaced by ``new`` (``new`` empty drops it)."""
+        text: str = (FIXTURES / name).read_text(encoding="utf-8")
+        self.assertIn(old, text)
+        (self.root / "variant.txt").write_text(text.replace(old, new), encoding="utf-8")
+        return "variant.txt"
+
+    def test_green(self) -> None:
+        self.contract(full=emit("karma_ok.txt"))
+        lines, code = self.run_script("full")
+        self.assertEqual(lines, [
+            f"Command: {emit('karma_ok.txt')}",
+            "Totals: 2 total, 0 failed, 0 errors, 0 skipped in 0.011s",
+            "Failures: none",
+        ])
+        self.assertEqual(code, 0)
+
+    def test_failure(self) -> None:
+        self.contract(full=emit("karma_fail.txt", 1))
+        lines, code = self.run_script("full")
+        self.assertEqual(lines[1:], [
+            "Totals: 2 total, 1 failed, 0 errors, 0 skipped in 0.008s",
+            "Failures:",
+            "- tmp failing check fails on purpose — src/app/tmp-karma-capture/tmp-karma-fail.spec.ts:7: "
+            "Expected 1 to be 2.",
+        ])
+        self.assertEqual(code, 1)
+
+    def test_skipped(self) -> None:
+        self.contract(full=emit("karma_skip.txt"))
+        lines, code = self.run_script("full")
+        self.assertEqual(lines[1:], ["Totals: 2 total, 0 failed, 0 errors, 1 skipped in 0.008s", "Failures: none"])
+        self.assertEqual(code, 0)
+
+    def test_chain_with_unittest(self) -> None:
+        first, second = emit("karma_ok.txt"), emit("unittest_ok.txt")
+        self.contract(full=f"{first} && {second}")
+        lines, code = self.run_script("full")
+        self.assertEqual(lines[1:], [
+            "Totals:",
+            f"- {first}: 2 total, 0 failed, 0 errors, 0 skipped in 0.011s",
+            f"- {second}: 2 total, 0 failed, 0 errors, 0 skipped in 0.000s",
+            "Failures: none",
+        ])
+        self.assertEqual(code, 0)
+
+    def test_without_total_line_is_generic(self) -> None:
+        name: str = self.variant("karma_fail.txt", "{ESC}[31mTOTAL: 1 FAILED, 1 SUCCESS{ESC}[39m\n", "")
+        self.contract(full=emit(name, 1))
+        lines, code = self.run_script("full")
+        self.assert_no_escape(lines)
+        self.assertEqual(lines[1:3], ["Totals: not available (exit 1)", "Note: runner not recognized; last lines:"])
+        self.assertEqual(lines[-1], "Chrome Headless 157.0.0.0 (Windows 10): Executed 2 of 2 (1 FAILED) "
+                                    "(0.008 secs / 0.004 secs)")
+        self.assertEqual(code, 1)
+
+    def test_minutes_and_singular_seconds(self) -> None:
+        # Karma 6.4.4, helper.formatTimeInterval: "<m> min(s) <s> sec(s)" from 60 s on, "sec" for exactly 1 s.
+        for times, total in (("1 min 5.5 secs / 1 sec", "65.5s"), ("2 mins 0 secs / 1 min 59.9 secs", "120s"),
+                             ("1 sec / 0.5 secs", "1s")):
+            name: str = self.variant("karma_ok.txt", "0.011 secs / 0.002 secs", times)
+            self.contract(full=emit(name))
+            lines, _ = self.run_script("full")
+            self.assertEqual(lines[1], f"Totals: 2 total, 0 failed, 0 errors, 0 skipped in {total}", times)
+
+    def test_failed_and_skipped(self) -> None:
+        # Karma 6.4.4, BaseReporter.renderBrowser: " (<k> FAILED)" before " (skipped <s>)".
+        name: str = self.variant("karma_fail.txt", "Executed 2 of 2{ESC}[31m (1 FAILED){ESC}[39m (0.008 secs",
+                                 "Executed 2 of 3{ESC}[31m (1 FAILED){ESC}[39m (skipped 1) (0.008 secs")
+        self.contract(full=emit(name, 1))
+        lines, _ = self.run_script("full")
+        self.assertEqual(lines[1], "Totals: 3 total, 1 failed, 0 errors, 1 skipped in 0.008s")
+
+    def test_location_skips_node_modules(self) -> None:
+        name: str = self.variant("karma_fail.txt",
+                                 "\t    at UserContext.apply (src/app/tmp-karma-capture/tmp-karma-fail.spec.ts:7:15)\n", "")
+        self.contract(full=emit(name, 1))
+        lines, _ = self.run_script("full")
+        self.assertEqual(lines[-1], "- tmp failing check fails on purpose — Expected 1 to be 2.")
+
+    def test_location_skips_url_frames(self) -> None:
+        frame: str = "\t    at UserContext.apply (src/app/tmp-karma-capture/tmp-karma-fail.spec.ts:7:15)\n"
+        for url in ("http://localhost:9876/_karma_webpack_/main.js:123:45", "webpack:///./src/app/x.spec.ts:3:9"):
+            name: str = self.variant("karma_fail.txt", frame, f"\t    at Object.check ({url})\n{frame}")
+            self.contract(full=emit(name, 1))
+            lines, _ = self.run_script("full")
+            self.assertEqual(lines[-1], "- tmp failing check fails on purpose — "
+                                        "src/app/tmp-karma-capture/tmp-karma-fail.spec.ts:7: Expected 1 to be 2.", url)
+
+    def test_lookalike_lines_are_not_karma(self) -> None:
+        for lookalike in ("TOTAL: 3 tests", "Grand TOTAL: 2 SUCCESS", "TOTAL: 2 SUCCESS, 0 FAILED"):
+            name: str = self.variant("karma_ok.txt", "TOTAL: 2 SUCCESS", lookalike)
+            self.contract(full=emit(name))
+            lines, _ = self.run_script("full")
+            self.assertEqual(lines[1], "Totals: not available (exit 0)", lookalike)
 
 
 class ChainTests(ProjectCase):

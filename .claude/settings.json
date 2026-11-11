@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "500000"
+  },
   "permissions": {
     "ask": [
       "Bash(git push:*)",
