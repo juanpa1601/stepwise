@@ -83,7 +83,7 @@ No hay reglas ni guías por framework. Lo propio de cada proyecto (arquitectura,
    - Decision docs: ...
    - Traceability: ...
    ```
-   Con una clave faltante, la pieza se detiene, dice cuál falta y propone la línea; no la escribe sin aprobación y no adivina. En `Decision docs` y `Traceability`, `<feature>` y `<n>` se reemplazan. La clave opcional `Docs paths` se describe en el [README del plugin](../../../plugins/stepwise/README.md).
+   Con una clave faltante, la pieza se detiene, dice cuál falta y propone la línea; no la escribe sin aprobación y no adivina. En `Decision docs` y `Traceability`, `<feature>` y `<n>` se reemplazan. Las claves opcionales se describen en el [README del plugin](../../../plugins/stepwise/README.md): `Docs paths` (con ella, `/close` no repite la suite si solo cambiaron esas rutas) y `Prompts` (con ella, `/spec` guarda el pedido exacto en el mismo commit del ADR).
 
    **Tests fuera de la suite principal:** `Tests (full)` es todo lo que `/check` y `/close` corren. Si el proyecto tiene tests aparte (por ejemplo los de `.claude/hooks/`), el valor los encadena: `cmd1 && cmd2`. `test-runner` corre el valor una vez, tal cual, y reporta los totales de cada comando; los que no corrieron porque uno anterior falló salen como `not run`.
 

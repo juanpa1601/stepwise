@@ -68,8 +68,9 @@ Nothing is configured inside the plugin. Each project declares its commands in i
 - Traceability: docs/pull-requests/<feature>/step-<n>.md
 ```
 
-- **Optional key:** `Docs paths` (for example `'*.md' 'docs/**'`) lets `/close` skip re-running the suite when only documentation changed.
+- **Optional keys:** `Docs paths` (for example `'*.md' 'docs/**'`) lets `/close` skip re-running the suite when only documentation changed. `Prompts` (for example `docs/prompts/<feature>/`) makes `/spec` save the exact request in that folder, in the same commit as the ADR, which links it.
 - **Permissions:** declare the `ask` rules from [`references/ask-rules.json`](plugins/stepwise/references/ask-rules.json) in the project's `.claude/settings.json`, so commits, pushes and GitHub writes always ask first. `/check` warns when they drift.
+- **Compaction window (recommended):** add `"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "500000"` (a string, no suffix) to the `env` of the project's `.claude/settings.json`. At 200K, a long step with `/close` compacts halfway through; at 1M it almost never compacts, but every turn costs more. The plugin can't set it, because a plugin's `settings.json` drops `env`, and the project value wins over the user one.
 - **Language:** the skills talk to you in your language, but the ADR, traceability and PR templates they write are in Spanish.
 - **Adopting it in an existing project:** see the [migration template](docs/migration-template.md).
 
