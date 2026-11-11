@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Plans a new feature, a bug fix or a new step of an existing feature. Investigates the code with stepwise:explore, interviews the user only on what the code cannot answer, writes the ADR (numbered acceptance criteria CA-n in Given/When/Then, steps with the criteria each covers, out of scope, risks, open decisions) and, after approval, creates the feature branch, commits the ADR and opens the main PR in draft. Never writes code.
+description: Plans a new feature, a bug fix or a new step of an existing feature. Investigates the code with stepwise:explore, interviews the user only on what the code cannot answer, writes the ADR (numbered acceptance criteria CA-n in Given/When/Then, steps with the criteria each covers, out of scope, risks, open decisions) and, after approval, creates the feature branch, commits the ADR (with the optional Prompts key, also the request text as a prompt file, in the same commit) and opens the main PR in draft. Never writes code.
 argument-hint: <description of the feature, bug or new step>
 disable-model-invocation: true
 ---
@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 Plan the request in `$ARGUMENTS`. Follow the sections in order. Talk to the user in their language; the ADR is written in the language of the template.
 
-**You never write code, tests or migrations.** The only file you write is the ADR, with the Write and Edit tools (shell edits are blocked by the `stepwise` hooks).
+**You never write code, tests or migrations.** The only files you write are the ADR and, when `Prompts` is declared, the prompt file (section 6), with the Write and Edit tools (shell edits are blocked by the `stepwise` hooks).
 
 ## 0. Preconditions (change nothing yet)
 
@@ -25,6 +25,7 @@ Plan the request in `$ARGUMENTS`. Follow the sections in order. Talk to the user
      Use a value the project already documents (cite `path:line`); otherwise write `<value>`. Never edit `CLAUDE.md` without approval and never guess.
    <!-- /shared:project-commands -->
    - In `Decision docs`, `<feature>` is replaced by the feature name.
+   - **Optional key `Prompts`:** a folder (for example `- Prompts: docs/prompts/<feature>/`), with `<feature>` replaced. If it is missing, do not ask for it and do not stop: no prompt file is written, and the summary (section 5) and the report (section 7) say so.
 3. **Working tree.** `git status --short` must show no changes to tracked files. If it does, stop and ask: switching branches would carry them along.
 
 ## 1. Classify the request
@@ -63,13 +64,14 @@ Ask only what the code and the docs do not answer: scope, business rules, edge c
    - **Out of scope** and **risks**, always filled.
    - **Bug:** `CA-1` is a regression test that reproduces the error (the input, the wrong result today and the expected result).
    - **New step:** update the existing ADR instead of creating another: append the new CAs and steps, continuing the numbering, and touch nothing that is already done.
+   - **Source (`Fuente / Documento`), with `Prompts`:** link the prompt file that section 6 will write (its path relative to the ADR). For a new step, add the link to that step's prompt file and keep what the field already says.
    - Remove the template's HTML comments.
 
 ## 5. Approval
 
-Show a short summary: type, feature name and branch, the CAs (one line each), the CAs proposed as manual (`CA-<n>: manual — <reason>`, one line each, or "ninguno"), the steps with their CAs, and the open decisions. Ask for approval and end the turn.
+Show a short summary: type, feature name and branch, the CAs (one line each), the CAs proposed as manual (`CA-<n>: manual — <reason>`, one line each, or "ninguno"), the steps with their CAs, the open decisions, and the prompt file (its path, or, without `Prompts`, the line `Prompt: no se guarda (sin la clave opcional Prompts)` written literally, without translating or rewording it). Ask for approval and end the turn.
 
-- **Without explicit approval, do not create branches, commit, push or open PRs.**
+- **Without explicit approval, do not write the prompt file, create branches, commit, push or open PRs.**
 - If the user asks for changes, edit the ADR and show the summary again.
 
 ## 6. After approval
@@ -83,13 +85,32 @@ Show a short summary: type, feature name and branch, the CAs (one line each), th
 git -c credential.helper= -c credential.helper='!gh auth git-credential' push https://github.com/<owner>/<repo>.git <branch>
 ```
 
+**Prompt file** (only with `Prompts`; written with Write, never before approval):
+- **Path:** the `Prompts` folder plus `<YYYY-MM-DD>-spec.md` for a feature or a bug, or `<YYYY-MM-DD>-spec-step-<n>.md` for a new step, where `<n>` is the number of the first step this `/spec` adds. The date is today's.
+- **Already exists:** check it right before the Write, after the approval, with Glob on the exact path: an earlier check (for example in the summary) does not count, because the file may appear in between. If it exists, do not write it. Stop before the commit, show the path and ask: overwrite, use another name, or do not save it. Do not commit until the user answers. For another name, repeat this check on the new path before writing.
+- **The ADR's link follows the final path:** before the commit, if the path written differs from the one in `Fuente / Documento` (another date, or another name the user chose), fix the link. If the user chose not to save it, remove that link and leave the field as it would be without `Prompts`.
+- **Length:** do not check it; each project has its own limits and tests.
+- **Content:** this header, in the language of the ADR template, then the request exactly as received, character by character: `$ARGUMENTS`. No summary, translation, reformatting, code fence or trimming, and none of the interview answers (those live in the ADR).
+  ```markdown
+  # Prompt de /spec: <feature>
+
+  - **Fecha:** <YYYY-MM-DD>
+  - **Tipo:** <feature | bug | paso nuevo (paso <n>)>
+  - **Rama:** `<feature>`
+  - **ADR:** [`<ADR path>`](<ADR path relative to the prompt file>)
+
+  ---
+
+  ```
+
 ### New feature or bug
 
 1. **Update the base:** `git fetch origin <Base branch>`. If the fetch fails and the remote is GitHub, compare `gh api repos/<owner>/<repo>/branches/<Base branch> -q .commit.sha` with `git rev-parse <Base branch>`; if they differ, stop and ask the user to update it. If neither the fetch nor `gh api` can confirm it, stop and ask; do not assume it is up to date. With no `origin` at all, warn and use the local `<Base branch>`. Start from `origin/<Base branch>` only when the fetch worked; after the `gh api` check, or with no `origin`, start from the local `<Base branch>`, which is the one that was checked.
 2. **Branch:** if `<feature>` already exists (local or remote), stop and ask. Otherwise `git switch --no-track -c <feature> <start point>` (the untracked ADR comes along). `--no-track` keeps `<feature>` from tracking `origin/<Base branch>` when the start point is that remote branch.
-3. **Commit:** stage only the ADR. Message in English: `docs(<feature>): add ADR`.
-4. **Push** `<feature>`.
-5. **Main PR (GitHub only):** write the body with Write in a temporary directory and run `gh pr create --draft --base <Base branch> --head <feature> --title "[<feature>] <summary>" --body-file <file>`. The title goes on the command line: write `<summary>` without the literal name of an environment file (say "archivos de entorno"), because `block_env_access` reads the whole command. Body, in the ADR's language:
+3. **Prompt file** (only with `Prompts`): write it now, on `<feature>`, following **Prompt file** above.
+4. **Commit:** stage only the ADR and, if it was written, the prompt file. Message in English: `docs(<feature>): add ADR`.
+5. **Push** `<feature>`.
+6. **Main PR (GitHub only):** write the body with Write in a temporary directory and run `gh pr create --draft --base <Base branch> --head <feature> --title "[<feature>] <summary>" --body-file <file>`. The title goes on the command line: write `<summary>` without the literal name of an environment file (say "archivos de entorno"), because `block_env_access` reads the whole command. Body, in the ADR's language:
    ```markdown
    Documento de decisiones: [`<ADR path>`](<ADR path>)
 
@@ -102,9 +123,10 @@ git -c credential.helper= -c credential.helper='!gh auth git-credential' push ht
 ### New step
 
 1. Branch and freshness were checked in section 1; stay on `<feature>`.
-2. Commit only the ADR: `docs(<feature>): add step <n> to ADR`, and push.
-3. **Main PR (GitHub only):** `gh pr list --head <feature> --base <Base branch> --state open --json number,body`. Add the new steps as unchecked items to its checklist with `gh pr edit <number> --body-file <file>`, changing nothing else. If there is no main PR, warn and skip.
+2. **Prompt file** (only with `Prompts`): write it now, following **Prompt file** above.
+3. Commit only the ADR and, if it was written, the prompt file: `docs(<feature>): add step <n> to ADR`, and push.
+4. **Main PR (GitHub only):** `gh pr list --head <feature> --base <Base branch> --state open --json number,body`. Add the new steps as unchecked items to its checklist with `gh pr edit <number> --body-file <file>`, changing nothing else. If there is no main PR, warn and skip.
 
 ## 7. Report
 
-Five lines at most: ADR path, branch, commit, main PR link (or why it was skipped), and "next: `/implement 1`" (or the new step's number).
+Six lines at most: ADR path, prompt file path (or, without `Prompts`, the line `Prompt: no guardado (sin la clave opcional Prompts)` written literally, without translating or rewording it), branch, commit, main PR link (or why it was skipped), and "next: `/implement 1`" (or the new step's number).

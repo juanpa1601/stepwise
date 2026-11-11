@@ -4,6 +4,9 @@ Changes to the `stepwise` plugin. The format follows [Keep a Changelog](https://
 
 ## [Unreleased]
 
+### Added
+- **The optional `Prompts` key** in `## Project commands`: with it, `/spec` saves the exact request text to `<Prompts>/<YYYY-MM-DD>-spec.md` (or `-spec-step-<n>.md` for a new step), with a short header, in the same commit as the ADR, and the ADR links it from "Fuente / Documento". Without the key, nothing changes.
+
 ## [1.0.0] - 2026-11-09
 First public release.
 
