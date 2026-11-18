@@ -4,6 +4,9 @@ Changes to the `stepwise` plugin. The format follows [Keep a Changelog](https://
 
 ## [Unreleased]
 
+### Changed
+- **Major:** `/check` and `/close` run only the step's tests (the ones `/implement` lists under `### Tests del paso`), never `Tests (full)`, and the last `/close` leaves the main PR in draft.
+
 ## [1.1.0] - 2026-11-10
 
 ### Added

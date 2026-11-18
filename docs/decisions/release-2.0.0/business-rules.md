@@ -62,7 +62,7 @@ Los CA de texto de skill se comprueban leyendo la `SKILL.md` contra el CA. El co
 
 **Todos los pasos**
 - **CA-20:** Dado cada paso hecho, cuando corre `Tests (full)`, entonces pasa.
-- **CA-21 (manual: revisión del diff):** Dado el diff de cada paso, cuando se busca con la lista de términos de la regla 1, entonces no aparece ninguno. Un hallazgo es un `blocker`.
+- **CA-21 (manual: revisión del diff):** Dado el diff de cada paso, cuando se busca con la lista de términos de la regla 1 (también rutas locales con `/`), entonces no aparece ninguno. Un hallazgo es un `blocker`. No cuenta el texto genérico que ya está en `main` y no viene de la fuente (decisión del usuario en el paso 1).
 
 ## 3. Reglas de Negocio Clave
 1. **Saneamiento** (usuario, no negociable): igual que en `release-1.1.0`. Nada nombra el repo de origen, su organización, sus proyectos, sus PR, sus ADR, rutas locales ni personas, tampoco en docstrings ni tests. Las fuentes y los términos están en la memoria privada de Claude, fuera del repo.

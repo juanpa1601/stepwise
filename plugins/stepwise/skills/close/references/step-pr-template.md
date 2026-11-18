@@ -30,7 +30,7 @@
 
 ## Checklist del Paso
 - [ ] Código implementado según los CA del paso en el ADR.
-- [ ] Tests del paso creados y suite completa en verde (o fallos preexistentes registrados con la decisión del usuario).
+- [ ] Tests del paso creados, listados en "Tests del paso" y en verde (o fallos preexistentes registrados con la decisión del usuario). La suite completa la corre `/regression`.
 - [ ] Code review sin `blocker` abierto.
 - [ ] Verificaciones `después del merge` agregadas al checklist del PR principal (o ninguna).
 - [ ] Trazabilidad registrada en `{{TRACEABILITY_FILE}}`.
