@@ -5,16 +5,19 @@ A [Claude Code](https://claude.com/claude-code) plugin for step-by-step feature 
 ## The flow
 
 ```
-spec → implement → check → audit → close
+spec → (implement → check → audit → close, per step) → regression
 ```
+
+Each step runs only its own tests. Once every step is merged, `regression` runs the full suite once on the feature branch, and it is the only stage that takes the main PR out of draft.
 
 | Stage | Skill | What it does |
 |---|---|---|
 | Plan | `/stepwise:spec <description>` | Investigates the code, interviews you only on what the code can't answer, and writes the ADR (acceptance criteria `CA-n` in Given/When/Then, steps, risks). With your approval, creates the feature branch and opens the main PR as a draft. Never writes code. |
-| Implement | `/stepwise:implement <n>` | Creates `<feature>-step-<n>` and, for each criterion, writes the test first and then the code until the step's tests pass. No commit. |
-| Verify | `/stepwise:check` | Runs the full suite, migrations check, lint and type check. Fixes only what belongs to the step (3 attempts at most) and records the results with a fingerprint of the diff. |
+| Implement | `/stepwise:implement <n>` | Creates `<feature>-step-<n>` and, for each criterion, writes the test first and then the code until the step's tests pass, and lists those tests in the traceability. No commit. |
+| Verify | `/stepwise:check` | Runs the step's tests (never the full suite), migrations check, lint and type check. Fixes only what belongs to the step (3 attempts at most) and records the results with a fingerprint of the diff. |
 | Review | `/stepwise:audit self \| comments [<pr>] \| pr <pr>` | `self` reviews the step's diff and fixes blockers; `comments` triages a PR's unresolved review comments; `pr` drafts a review of someone else's PR. Never posts to GitHub without your approval. |
-| Close | `/stepwise:close` | Runs `/audit self` if needed, completes the traceability, commits, pushes, opens and merges the Sub-PR into the feature branch, and ticks the step in the main PR. |
+| Close | `/stepwise:close` | Runs `/audit self` if needed, completes the traceability, commits, pushes, opens and merges the Sub-PR into the feature branch, and ticks the step in the main PR. The last one leaves the main PR in draft. |
+| Regression | `/stepwise:regression` | Runs the full suite once on the feature branch, in the background, after every step is merged. When green, records the run and asks before taking the main PR out of draft; when red, fixes nothing and proposes a correction step with `/spec`. |
 
 You chain the stages yourself: the skills are user-invoked only (`disable-model-invocation`), so Claude never starts one on its own. When no other command uses the name, the short form works too (`/spec`, `/check`…).
 
@@ -68,7 +71,7 @@ Nothing is configured inside the plugin. Each project declares its commands in i
 - Traceability: docs/pull-requests/<feature>/step-<n>.md
 ```
 
-- **Optional keys:** `Docs paths` (for example `'*.md' 'docs/**'`) lets `/close` skip re-running the suite when only documentation changed. `Prompts` (for example `docs/prompts/<feature>/`) makes `/spec` save the exact request in that folder, in the same commit as the ADR, which links it.
+- **Optional keys:** `Docs paths` (for example `'*.md' 'docs/**'`) lets `/close` skip re-running the step's tests when only documentation changed. `Prompts` (for example `docs/prompts/<feature>/`) makes `/spec` save the exact request in that folder, in the same commit as the ADR, which links it.
 - **Permissions:** declare the `ask` rules from [`references/ask-rules.json`](plugins/stepwise/references/ask-rules.json) in the project's `.claude/settings.json`, so commits, pushes and GitHub writes always ask first. `/check` warns when they drift.
 - **Compaction window (recommended):** add `"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "500000"` (a string, no suffix) to the `env` of the project's `.claude/settings.json`. At 200K, a long step with `/close` compacts halfway through; at 1M it almost never compacts, but every turn costs more. The plugin can't set it, because a plugin's `settings.json` drops `env`, and the project value wins over the user one.
 - **Language:** the skills talk to you in your language, but the ADR, traceability and PR templates they write are in Spanish.

@@ -53,7 +53,7 @@ Los CA de texto de skill se comprueban leyendo la `SKILL.md` contra el CA. El co
   - `README.md` tiene la etapa de regresión en la tabla y "Verify" corre los tests del paso;
   - la descripción de `plugin.json` nombra `regression`;
   - `[Unreleased]` trae `Added` y `Changed` (mayor), con lo que pasa con una feature en curso.
-- **CA-18 (manual: documentación):** Dada `docs/migration-template.md`, cuando se lee, entonces P1 ya no dice que una suite de más de 570 s frena (`:36`): la corre `/regression` en segundo plano. Las reglas de la sesión (`:68-70`) nombran `/stepwise:regression` como la etapa que saca el PR principal de draft.
+- **CA-18 (manual: documentación):** Dada `docs/migration-template.md`, cuando se lee, entonces P1 ya no dice que una suite de más de 570 s frena (`:36`): la corre `/regression` en segundo plano. Las reglas de la sesión (`:68-70`) nombran `/stepwise:regression` como la etapa que saca el PR principal de draft. R3 pide `/regression` en el `CLAUDE.md` del proyecto, y R4 cierra la migración con `/stepwise:regression` (decisión del usuario en el paso 3).
 - **CA-19 (manual: sesión real con `claude --plugin-dir`, solo la corre el usuario):** Dado un repo desechable en GitHub con una feature de dos pasos y una suite de más de 600 s (un test con `sleep`), cuando se corre el flujo completo con el plugin de la rama, entonces:
   - `/check` y `/close` corren solo los tests de cada paso;
   - el último `/close` deja el PR en draft;
