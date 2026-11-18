@@ -34,7 +34,7 @@ Si alguna falla, se detiene y lo dice.
 ### P1. Inventario
 La sesión lanza `stepwise:explore` ("very thorough") sobre el clon y arma la tabla del requisito R0. Busca:
 - **Comandos reales:** tests de un paso y suite completa, lint/format, type check y chequeo de migraciones, con su fuente (`ruta:línea` de la CI, `Makefile`, `package.json`, `compose`, README). Cada comando **se corre una vez** para medir tiempo y estado:
-  - si la suite pasa de 570 s, `stepwise:test-runner` reportará `timeout`: se pregunta antes de seguir;
+  - una suite completa de más de 570 s no frena: la corre `/stepwise:regression` en segundo plano, con `--timeout 3600`. Los 570 s quedan para los tests de un paso, que corre `stepwise:test-runner`; si ellos pasan de 570 s, se pregunta antes de seguir;
   - si un lint o un type check fallan hoy sobre todo el repo, se pregunta: arreglar la base en un paso aparte, acotar el comando al diff o `none`.
 - **Piezas locales:** agentes (`.claude/agents/`), skills (`.claude/skills/`), comandos (`.claude/commands/`), hooks (`.claude/hooks/` y sus entradas en `.claude/settings.json`), plantillas (`docs/templates/`) y copias para otras IA (`AGENTS.md`, `.agents/`, `GEMINI.md`). De cada una: si el plugin la reemplaza, si se queda o si lo decide `/spec`.
 - **Archivos de entorno:** cuáles hay (`.env`, `.env.*`, assets) y qué los carga. Ningún comando de `## Project commands` puede nombrarlos, porque `block_env_access` lo negaría. Se cargan por fuera del comando (`env_file`, `COMPOSE_ENV_FILES`, la configuración del runner).
@@ -64,10 +64,10 @@ La sesión muestra la tabla y, **con la aprobación del usuario**, la escribe en
 4. Después la sesión se detiene y le pide al usuario que actualice `<Base branch>` y escriba el comando de la sección **Comando**.
 
 ## Reglas de la sesión
-- **El usuario encadena el flujo.** Las skills son "User only · locked": el agente nunca dice "ejecuto `/spec`". Al terminar cada etapa se detiene y le pide al usuario que escriba el siguiente comando (`/stepwise:implement <n>`, `/stepwise:check` o `/stepwise:close`), también después de un "corrige y cierra".
+- **El usuario encadena el flujo.** Las skills son "User only · locked": el agente nunca dice "ejecuto `/spec`". Al terminar cada etapa se detiene y le pide al usuario que escriba el siguiente comando (`/stepwise:implement <n>`, `/stepwise:check`, `/stepwise:close` o, con todos los pasos mergeados, `/stepwise:regression`), también después de un "corrige y cierra".
 - **Fricción del plugin:** cualquier fricción con una skill, un agente o un hook se anota en la sección "Fricción del plugin" de la trazabilidad del paso. No se arregla aquí: se reporta como issue en `juanpa1601/stepwise`.
 - **Ninguna lectura de `<archivo de entorno>`.** Ningún comando, mensaje de commit ni título de PR lo nombra literalmente: `block_env_access` lee el comando entero. Los mensajes van por archivo (`git commit -F`, `--body-file`).
-- **El PR principal no sale de draft ni se mergea a `<Base branch>` sin el usuario.** `/spec` pregunta quién lo revisa.
+- **El PR principal no sale de draft ni se mergea a `<Base branch>` sin el usuario.** Solo `/stepwise:regression` lo saca de draft, después de la suite completa sobre la rama de la feature, y pregunta antes. `/spec` pregunta quién lo revisa.
 
 ## Comando
 Lo escribe el usuario, en una sesión nueva, después de mergear el PR de claves:
@@ -114,15 +114,16 @@ Va antes de R3 para que la rama nunca quede sin protección: si los hooks locale
 - **Agentes** `<pieza local>` (por ejemplo `explore` y `test-runner`), **skills** (por ejemplo una de cierre de paso) y **plantillas** (`docs/templates/`), si el plugin trae las suyas. Antes de borrar una plantilla se busca con `stepwise:explore` qué más la usa.
 - **Hooks** que cubre el plugin (por ejemplo `block_inplace_edits` y `block_env_access`), con sus tests y sus entradas en `.claude/settings.json`. Antes de borrar cada uno se compara con el del plugin; si el local bloquea algo que el del plugin no, se pregunta.
 - **Se quedan:** `<piezas locales que se quedan>` (lo decide R5).
-- **`CLAUDE.md`:** la descripción del flujo anterior pasa a `/spec`, `/implement`, `/check`, `/close` y `/audit`, una línea por skill con el enlace al README del plugin, para que no se desactualice.
+- **`CLAUDE.md`:** la descripción del flujo anterior pasa a `/spec`, `/implement`, `/check`, `/close`, `/audit` y `/regression`, una línea por skill con el enlace al README del plugin, para que no se desactualice.
 - **Sesión nueva:** si el paso toca `.claude/agents/`, `.claude/skills/` o `.claude/commands/`, `/implement` lo avisa. Se abre una sesión nueva antes de `/stepwise:check`; hasta entonces las piezas viejas siguen cargadas y se confunden con `stepwise:explore` y `stepwise:test-runner`.
 
 ### R4. Paso 4: verificación final
 1. `/stepwise:audit pr <num>` sobre un PR de <Proyecto> ya mergeado, con el `## Project commands` real. No publica nada: el borrador no se aprueba.
 2. El `## Pruebas` que escribe `/stepwise:check` trae `- **Alineación del plugin:** ok`.
 3. El último paso se cierra con `/stepwise:close`, de punta a punta.
+4. Con todos los pasos mergeados, `/stepwise:regression` sobre `<feature>` corre la suite completa y, en verde, saca el PR principal de draft.
 
-Los dos primeros solo los puede correr el usuario: van como CA `(manual: <motivo>)`, con el comando exacto.
+Los dos primeros solo los puede correr el usuario: van como CA `(manual: <motivo>)`, con el comando exacto. El cuarto no es un CA del paso 4 ni una verificación `después del merge`: es la etapa que sigue al último `/close`, y `/stepwise:regression` no saca el PR de draft mientras quede una de esas casillas sin marcar.
 
 ### R5. Lo que decide el proyecto
 `/spec` pregunta, con lo que encontró el inventario:
