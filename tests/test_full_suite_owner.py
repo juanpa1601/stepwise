@@ -4,6 +4,10 @@ ADR release-2.0.0, CA-7: un `SKILL.md` distinto de
 `skills/regression/SKILL.md` no delega `"full"` a `test-runner`, no invoca
 `run_tests.py` con `full` y no contiene `gh pr ready`. Cada violación se
 reporta como `ruta:línea`.
+
+CA-15: `skills/regression/SKILL.md` existe, invoca
+`run_tests.py" full --timeout 3600`, menciona `run_in_background`, contiene
+`gh pr ready` y no delega `"full"` a `test-runner`.
 """
 
 import re
@@ -26,6 +30,32 @@ RULES = (
     ),
     ("contiene gh pr ready", re.compile(r"gh pr ready")),
 )
+DELEGATES_FULL = RULES[0]
+OWNER_REQUIRES = (
+    (
+        'no invoca run_tests.py" full --timeout 3600',
+        re.compile(r'run_tests\.py"\s+full\s+--timeout\s+3600\b'),
+    ),
+    ("no menciona run_in_background", re.compile(r"run_in_background")),
+    ("no contiene gh pr ready", re.compile(r"gh pr ready")),
+)
+
+
+def owner_problems(files: dict[str, str]) -> list[str]:
+    """Lo que le falta o le sobra a OWNER (CA-15)."""
+    if OWNER not in files:
+        return [f"{OWNER}: no existe"]
+    text = files[OWNER]
+    problems = [
+        f"{OWNER}: {label}"
+        for label, pattern in OWNER_REQUIRES
+        if not pattern.search(text)
+    ]
+    label, pattern = DELEGATES_FULL
+    for number, line in enumerate(text.split("\n"), start=1):
+        if pattern.search(line):
+            problems.append(f"{OWNER}:{number}: {label}")
+    return problems
 
 
 def find_violations(files: dict[str, str]) -> list[str]:
@@ -124,6 +154,45 @@ class FindViolationsTest(unittest.TestCase):
         self.assertEqual(find_violations({CHECK: text}), [])
 
 
+OWNER_OK = (
+    "Run it with `run_in_background`:\n"
+    'python3 "<dir>/../../scripts/run_tests.py" full --timeout 3600\n'
+    "Then `gh pr ready <num>`.\n"
+)
+
+
+class OwnerProblemsTest(unittest.TestCase):
+    def test_complete_owner(self) -> None:
+        self.assertEqual(owner_problems({OWNER: OWNER_OK}), [])
+
+    def test_missing_owner(self) -> None:
+        self.assertEqual(owner_problems({CHECK: "x"}), [f"{OWNER}: no existe"])
+
+    def test_missing_each_requirement(self) -> None:
+        self.assertEqual(
+            owner_problems({OWNER: "nada"}),
+            [
+                f'{OWNER}: no invoca run_tests.py" full --timeout 3600',
+                f"{OWNER}: no menciona run_in_background",
+                f"{OWNER}: no contiene gh pr ready",
+            ],
+        )
+
+    def test_other_timeout_is_missing(self) -> None:
+        text = OWNER_OK.replace("3600", "570")
+        self.assertEqual(
+            owner_problems({OWNER: text}),
+            [f'{OWNER}: no invoca run_tests.py" full --timeout 3600'],
+        )
+
+    def test_owner_must_not_delegate_full(self) -> None:
+        text = OWNER_OK + 'Or delegate to `stepwise:test-runner`: "full".\n'
+        self.assertEqual(
+            owner_problems({OWNER: text}),
+            [f'{OWNER}:4: delega "full" a test-runner'],
+        )
+
+
 class RepoFullSuiteOwnerTest(unittest.TestCase):
     def test_only_regression_runs_full_suite_or_marks_ready(self) -> None:
         """CA-7"""
@@ -134,6 +203,10 @@ class RepoFullSuiteOwnerTest(unittest.TestCase):
             [],
             "solo /regression corre la suite completa o usa gh pr ready",
         )
+
+    def test_regression_runs_full_suite_in_background(self) -> None:
+        """CA-15"""
+        self.assertEqual(owner_problems(repo_files()), [])
 
 
 if __name__ == "__main__":
