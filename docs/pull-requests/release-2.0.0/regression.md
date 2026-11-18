@@ -13,4 +13,5 @@
 - **Ejecutó:** segundo plano (`run_tests.py full --timeout 3600`)
 - **Fallos preexistentes que se dejaron:** ninguno
 - **Verificaciones después del merge:** ninguna
+- **Ready sin confirmar:** la sección "Verificación de instalación desde `develop`" del PR principal quedó con placeholders (la sesión real de CA-19 se hizo con `--plugin-dir`, no instalando desde la rama); el usuario decidió marcar el PR ready igual, 2026-11-18.
 - **Nota:** `/stepwise:regression` no estaba cargada en la sesión, porque las skills se cargan al abrirla. Claude siguió a mano `plugins/stepwise/skills/regression/SKILL.md` de esta rama, a pedido del usuario: corrida en segundo plano desde la sesión principal, espera del aviso y lectura con `tail -n 20`.
