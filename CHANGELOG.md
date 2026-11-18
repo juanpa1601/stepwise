@@ -4,6 +4,9 @@ Changes to the `stepwise` plugin. The format follows [Keep a Changelog](https://
 
 ## [Unreleased]
 
+### Added
+- **The `/regression` skill:** runs `Tests (full)` once on `<feature>`, with every step merged, in the background from the main session (`run_tests.py full --timeout 3600`, with a manual fallback). When green, it writes `regression.md`, commits and pushes it on `<feature>`, and it is the only skill that takes the main PR out of draft. When red, it fixes nothing and proposes a correction step with `/spec`.
+
 ### Changed
 - **Major:** `/check` and `/close` run only the step's tests (the ones `/implement` lists under `### Tests del paso`), never `Tests (full)`, and the last `/close` leaves the main PR in draft.
 

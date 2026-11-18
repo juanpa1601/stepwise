@@ -20,9 +20,8 @@
 - Regla 1
 
 ## Verificación Global
-<!-- Del `## Pruebas` del último paso. -->
-- **Suite completa (`Tests (full)`):** `<command>`: <N> total, <N> failed, en <time>.
-- **Lint/format, Type check, Migrations check:** <resultado o `none`>.
+<!-- El último /close la deja en `pendiente de /regression`; /regression la llena con su corrida sobre la rama de la feature. -->
+- **Suite completa (`Tests (full)`):** `<command>`: <N> total, <N> failed, en <time>. Ejecutó: segundo plano | usuario. Registro: [`regression.md`](https://github.com/<owner>/<repo>/blob/{{FEATURE_BRANCH}}/<carpeta de Traceability>/regression.md).
 
 ## Verificación de instalación desde `develop`
 <!-- Obligatoria si el PR va hacia `main` y el repo publica plugins (tiene `.claude-plugin/marketplace.json` en la raíz). En cualquier otro PR, borra la sección y su ítem del checklist. Sin ella, ese PR a `main` no está listo para revisión. -->
@@ -32,7 +31,7 @@
 
 ## Checklist de Entrega
 - [ ] Todos los pasos mergeados en `{{FEATURE_BRANCH}}`.
-- [ ] Suite completa en verde.
+- [ ] Suite completa en verde (`/regression`, sobre `{{FEATURE_BRANCH}}` con todos los pasos mergeados).
 - [ ] Verificaciones después del merge confirmadas (o ninguna).
 - [ ] ADR y trazabilidad de cada paso completos.
 - [ ] Instalación verificada desde `develop` (sección anterior; solo en un PR a `main` de un repo que publica plugins).
