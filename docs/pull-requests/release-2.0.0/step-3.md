@@ -50,7 +50,7 @@ El paso solo toca documentación y la descripción de `plugin.json`. `/implement
 
 ### Verificación manual
 - **CA-17:** el README del plugin, el README raíz, `plugin.json` y el CHANGELOG describen el flujo nuevo.
-  - Pasos: 1. Leer `plugins/stepwise/README.md:16-27`, `:40`, `:51`, `:66`, `:69`, `:78`, `:81`. 2. Leer `README.md:8-20` y `:73`. 3. Leer la `description` de `plugins/stepwise/.claude-plugin/plugin.json`. 4. Leer `[Unreleased]` de `CHANGELOG.md`.
+  - Pasos: 1. Leer `plugins/stepwise/README.md:16-27`, `:40`, `:51`, `:66`, `:69`, `:78`, `:81`, `:91`. 2. Leer `README.md:8-20` y `:73`. 3. Leer la `description` de `plugins/stepwise/.claude-plugin/plugin.json`. 4. Leer `[Unreleased]` de `CHANGELOG.md`.
   - Esperado: el texto de CA-17.
   - Obtenido: `implement` (`:16`) anota `### Tests del paso`; `check` (`:17`) corre solo esa lista y la arma si falta; `close` (`:23`) vuelve a correr los tests del paso y deja el PR en draft con `next: /regression`; la entrada nueva `skills/regression/` (`:24-27`) describe la corrida en segundo plano, el verde y el rojo; `:40` deja los 570 s para `test-runner` y la suite para `/regression`; "Hoy" (`:51`) dice `step-tests` (check, close) y `regression` en `project-commands`, `git-rules` y `push-https`; `:66` y `:69` cubren `Tests (full): none` y las verificaciones después del merge; `:81` dice `2.0.0`. Tras la revisión: `:19` agrega a la lista los tests de los arreglos de `/audit self` (R5), `:23` acepta la `Suite completa` de un `/check` anterior y no exige la subsección con `Tests (step): none` (R6), `:40` deja el límite de 570 s solo para los tests del paso (R2) y "El test" de Versionado dice que el recordatorio de la versión llega en `/regression`, o en `/check` si el paso lista `tests/test_plugin_version.py` (R1). `README.md` trae el flujo con `regression` (`:8-11`), "Verify" con los tests del paso y la fila "Regression" (`:20`). La `description` nombra `regression`. `[Unreleased]` tiene `### Added` (`/regression`) y `### Changed` ("Major", con lo que pasa con una feature en curso).
   - Ejecutó: Claude
@@ -88,7 +88,7 @@ El paso solo toca documentación y la descripción de `plugin.json`. `/implement
 | R6 | suggestion | La entrada de `close` no decía que acepta la `Suite completa` de un `/check` anterior ni la excepción de `Tests (step): none`. | Arreglado. |
 
 - **Pasada sobre los arreglos:** R1, R2, R3, R5 y R6 `fixed`; R4 incompleto (el bloqueo con las verificaciones después del merge). El usuario eligió aclararlo en la plantilla, y una revisión solo de ese arreglo lo dio `fixed`, sin bloqueantes nuevos. La pasada encontró además R7: los "Pasos" de CA-17 no listan `plugins/stepwise/README.md:91`, que su "Obtenido" cita.
-- **Deuda:** R7 (sugerencia nueva de la segunda pasada; no se arregla sin revisión).
+- **Deuda:** R7 (sugerencia nueva de la segunda pasada; no se arregla sin revisión). Resuelta después de la publicación de `2.0.0` (2026-11-18, a pedido del usuario): los "Pasos" de CA-17 listan `plugins/stepwise/README.md:91`.
 - **Huella:** sha256:f202804cf0db79fa7089ad87a3240eae74fe543f3f5a5c182b7afec4a3ce0865
 
 ## Checklist del Paso
