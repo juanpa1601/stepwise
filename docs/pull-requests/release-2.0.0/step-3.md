@@ -39,7 +39,7 @@ La documentación describe el flujo de `2.0.0`: `/check` y `/close` corren los t
 - **Intentos:** 0.
 - **Arreglos:** ninguno.
 - **Fallos preexistentes que se dejaron:** ninguno.
-- **Verificación manual:** 4 CA, 3 ok, 1 pendiente de confirmar por el usuario (CA-19), 0 después del merge (ver abajo).
+- **Verificación manual:** 4 CA, 4 ok (CA-19 confirmado por el usuario), 0 pendientes de confirmar por el usuario, 0 después del merge (ver abajo).
 - **Corrida en `/close`:** la huella cambió (arreglos de la revisión R1 a R6).
 - **Huella:** sha256:f202804cf0db79fa7089ad87a3240eae74fe543f3f5a5c182b7afec4a3ce0865
 
@@ -67,8 +67,8 @@ El paso solo toca documentación y la descripción de `plugin.json`. `/implement
     4. En `<feature>`, correr `/stepwise:regression`. Comprobar que lanza `run_tests.py full --timeout 3600` en segundo plano desde la sesión principal, que la suite pasa de 600 s sin cortarse, que recibe el aviso, que escribe `regression.md` con su commit y que pregunta antes de editar el cuerpo y antes de `gh pr ready`.
     5. Repetir el paso 4 con `claude -p "/stepwise:regression" --plugin-dir <ruta a este repo>/plugins/stepwise` (por ejemplo, después de un commit vacío en `<feature>` que exija una corrida nueva) y anotar si la sesión espera el aviso o termina antes; si termina antes, comprobar que el respaldo manual da el comando de `Tests (full)`.
   - Esperado: el texto de CA-19.
-  - Obtenido: pendiente de confirmar por el usuario.
-  - Ejecutó: pendiente
+  - Obtenido: ok, confirmado por el usuario el 2026-11-18 (sin más detalle en la confirmación).
+  - Ejecutó: usuario
 - **CA-21:** el diff del paso no trae ningún término de la lista de saneamiento.
   - Pasos: 1. Buscar los términos de la regla 1 (sin distinguir mayúsculas, también rutas locales con `/`) en las líneas agregadas de `git diff release-2.0.0`.
   - Esperado: ninguna coincidencia, salvo texto genérico que ya está en `main` (CA-21).
@@ -93,7 +93,7 @@ El paso solo toca documentación y la descripción de `plugin.json`. `/implement
 
 ## Checklist del Paso
 - [x] Código implementado según los CA del paso en el ADR.
-- [ ] Tests del paso creados, listados en "Tests del paso" y en verde (o fallos preexistentes registrados con la decisión del usuario). La suite completa la corre `/regression`. — La lista es `ninguno` (solo documentación); CA-19 sigue pendiente de confirmar por el usuario.
+- [x] Tests del paso creados, listados en "Tests del paso" y en verde (o fallos preexistentes registrados con la decisión del usuario). La suite completa la corre `/regression`. — La lista es `ninguno` (solo documentación); CA-19 confirmado por el usuario.
 - [x] Code review sin `blocker` abierto.
 - [x] Verificaciones `después del merge` agregadas al checklist del PR principal (o ninguna).
 - [x] Trazabilidad registrada en `docs/pull-requests/release-2.0.0/step-3.md`.
