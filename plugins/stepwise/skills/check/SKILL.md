@@ -1,6 +1,6 @@
 ---
 name: check
-description: Verifies the current step (<feature>-step-<n>) before review and close. Runs the full suite with stepwise:test-runner (skipped and recorded when "Tests (full)" is none), the project's Migrations check, Lint/format and Type check; on failure analyzes the cause, fixes only what belongs to the step, reruns lint and type check on it and reruns the suite, with 3 attempts at most, and asks before touching a failure that likely already existed on <feature>. When everything passes, writes the "Pruebas" section of the step's traceability file with the step's fingerprint and the plugin alignment of the project's .claude/settings.json (a warning, never a failure). Does not commit.
+description: Verifies the current step (<feature>-step-<n>) before review and close. Runs only the step's tests (the "Tests del paso" list /implement wrote; skipped and recorded as "sin tests del paso" when the list is "ninguno", or as none when "Tests (step)" is none) with stepwise:test-runner, never the full suite (that is /regression's), then the project's Migrations check, Lint/format and Type check; on failure analyzes the cause, fixes only what belongs to the step, reruns lint and type check on it and reruns the step's tests, with 3 attempts at most, and asks before touching a failure that likely already existed on <feature>. When everything passes, writes the "Pruebas" section of the step's traceability file with the step's fingerprint and the plugin alignment of the project's .claude/settings.json (a warning, never a failure). Does not commit.
 disable-model-invocation: true
 ---
 
@@ -11,7 +11,7 @@ Verify the current step. Follow the sections in order. Talk to the user in their
 ## 0. Preconditions (change nothing yet)
 
 1. **Branch.** `git branch --show-current` must match `^(?P<feature>.+)-step-(?P<n>\d+)$`, taking the **last** `-step-` (`multi-step-form-step-2` is feature `multi-step-form`, step `2`). Otherwise stop and say so.
-2. **Project commands.** Read `CLAUDE.md` at the project root (the session directory), only the `## Project commands` section. Keys needed: `Tests (full)`, `Lint/format`, `Type check`, `Migrations check`, `Decision docs`, `Traceability`.
+2. **Project commands.** Read `CLAUDE.md` at the project root (the session directory), only the `## Project commands` section. Keys needed: `Tests (step)`, `Lint/format`, `Type check`, `Migrations check`, `Decision docs`, `Traceability`.
    <!-- shared:project-commands -->
    - If the section or a key is missing, change nothing. Reply with every missing key and the exact line to add, and stop:
      ```
@@ -23,12 +23,15 @@ Verify the current step. Follow the sections in order. Talk to the user in their
    <!-- /shared:project-commands -->
    - A value of `none` means that check does not apply: skip it and record it. In `Decision docs` and `Traceability`, replace `<feature>` and `<n>`; if `Traceability` ends with `/`, the file is `<dir>step-<n>.md`.
 3. **Step scope.** Read step `<n>` and its CAs in the ADR, and list the step's changes: `git diff --name-only <feature>` plus untracked files (`git status --short`). This is what "belongs to the step" means below.
+4. **Step tests list.** Read `## Pruebas` → `### Tests del paso` in the `Traceability` file (`/implement` writes it). Skip this item if `Tests (step)` is `none`.
+   - **Missing** (a step implemented with an older version of the plugin): build the list from the step's changes (item 3), taking the files that are tests by the project's conventions (location, naming, framework). Show it and ask the user to confirm or correct it before running anything, then write it in that subsection (before `### Verificación manual`, if there is one), one per line as ``- `<path or id>` ``, or `ninguno`. This is the only write allowed in section 0: create the `Traceability` file, or its `## Pruebas` section, if it is missing.
+   - **Present:** compare it with the step's changes. If a test file among them is not in the list, warn in one line and ask whether to add it; do not run anything until the user answers.
 
 ## 1. Run
 
-1. Delegate the suite to `stepwise:test-runner`: "full", <!-- shared:test-runner-foreground -->in the foreground (never `run_in_background`; wait for its report, the agent's own message with `Command:` and `Totals:` and not the notice that its task finished, without `sleep`, polling or other work meanwhile)<!-- /shared:test-runner-foreground -->. Do not run it in the main session. **If `Tests (full)` is `none`**, skip it, say so in one line and record it in section 3; do not call `test-runner`.
+1. <!-- shared:step-tests -->Run the step's tests: the list in `## Pruebas` → `### Tests del paso` of the `Traceability` file. With `Tests (step)` `none`, skip them and record `none`. If the list says `ninguno`, do not call `test-runner` and record `sin tests del paso`. Otherwise delegate to `stepwise:test-runner`: "step <every path or id of the list, separated by spaces>", never the full suite (only `/regression` runs it),<!-- /shared:step-tests --> <!-- shared:test-runner-foreground -->in the foreground (never `run_in_background`; wait for its report, the agent's own message with `Command:` and `Totals:` and not the notice that its task finished, without `sleep`, polling or other work meanwhile)<!-- /shared:test-runner-foreground -->. Do not run it in the main session.
 2. Run `Migrations check` exactly as declared, from the project root, unless it is `none`.
-3. Run `Lint/format`, then `Type check`, exactly as declared, from the project root, unless they are `none`. They run **always**, also when the suite ran and passed on the first try. A failure of either one is a failure of the step, handled like a failing test (section 2). **No files to check:** if `Lint/format` exits 0 and its output has the exact line `no files to check` (the marker a project prints when its scoped command found no files), record it as `sin archivos que revisar`, not `ok`; it is not a failure and costs no attempt.
+3. Run `Lint/format`, then `Type check`, exactly as declared, from the project root, unless they are `none`. They run **always**, also when the step's tests ran and passed on the first try, or there were none. A failure of either one is a failure of the step, handled like a failing test (section 2). **No files to check:** if `Lint/format` exits 0 and its output has the exact line `no files to check` (the marker a project prints when its scoped command found no files), record it as `sin archivos que revisar`, not `ok`; it is not a failure and costs no attempt.
 4. **Plugin alignment.** Run, from the project root (it only reads):
    ```bash
    python3 "<this skill's directory>/scripts/settings_alignment.py"
@@ -41,7 +44,7 @@ If everything that ran passes (the plugin alignment of item 4 never counts as a 
 
 ## 2. On failure
 
-**3 attempts at most.** An attempt is one fix followed by a rerun of what failed (section 1: the suite, `Migrations check`, `Lint/format` or `Type check`; every one the fix could affect).
+**3 attempts at most.** An attempt is one fix followed by a rerun of what failed (section 1: the step's tests, `Migrations check`, `Lint/format` or `Type check`; every one the fix could affect).
 
 For each failure:
 1. **Analyze the cause in the main session:** read the failing test and the code it exercises, by range. Do not delegate the analysis.
@@ -49,9 +52,10 @@ For each failure:
    - If you suspect it **already failed on `<feature>`** (neither the test nor the code it exercises is in the step's changes, and nothing in the step explains it), **ask the user before touching it**: fix it in this step, or leave it and record it. Do not spend an attempt on it until they answer. If they choose to leave it, it is recorded as pre-existing and does not block the rest.
 3. **Fix only what belongs to the step.** No unrelated refactors, no skipping or deleting tests, no weakening assertions, no editing the ADR's criteria to make a test pass. If the fix needs a design change or contradicts the ADR, stop and propose the change.
 4. **Lint and types after the fix.** Run `Lint/format`, then `Type check`, exactly as declared, from the project root; skip each one that is `none`. Fix what they report in the step's files. If they changed files, keep only the changes to the step's files; list the other files they touched and ask the user before reverting them.
-5. **Rerun.**
+5. **Tests the fix touched.** If the fix creates or modifies a test, add its path or id to `### Tests del paso` (replacing `ninguno` if that was the list) before rerunning.
+6. **Rerun.**
 
-If it still fails after the third attempt, **stop**. Do not write the traceability. Report the diagnosis in at most 10 lines: what fails (`file::test — file:line: error`), the cause you found, the 3 attempts and why each one did not work, and what you propose.
+If it still fails after the third attempt, **stop**. Do not write the list of `## Pruebas` (section 3); the `### Tests del paso` subsection that sections 0.4 and 2 wrote stays as it is. Report the diagnosis in at most 10 lines: what fails (`file::test — file:line: error`), the cause you found, the 3 attempts and why each one did not work, and what you propose.
 
 ## 3. Traceability ("Pruebas")
 
@@ -71,11 +75,11 @@ python3 "<this skill's directory>/../close/scripts/fingerprint.py" <feature> <Tr
 
 It prints the fingerprint without those paths; the root `CLAUDE.md` always counts. Write it as `- **Huella de código:** sha256:<hex>` (or `no disponible (<error>)`). Without the key, or with `Docs paths: none`, do not run it and do not write the line.
 
-Then write the `## Pruebas` section of the `Traceability` file. Create the file if it does not exist; if it exists, replace only the list of that section and keep the rest (for example `## Evidencia de regresión` and the `### Verificación manual` subsection from `/implement`, which stays below the list, unchanged). **Do not commit.**
+Then write the `## Pruebas` section of the `Traceability` file. Create the file if it does not exist; if it exists, replace only the list of that section and keep the rest (for example `## Evidencia de regresión` and the `### Tests del paso` and `### Verificación manual` subsections, which stay below the list, unchanged except for what sections 0.4 and 2 added to `### Tests del paso`). **Do not commit.**
 
 ```markdown
 ## Pruebas
-- **Suite completa (`Tests (full)`):** `<command>`: <N> total, <N> failed, <N> errors, <N> skipped, en <time>. | `none`: el proyecto no tiene suite automática; se saltó.
+- **Tests del paso (`Tests (step)`):** `<command>`: <N> total, <N> failed, <N> errors, <N> skipped, en <time>. | sin tests del paso | `none`: el proyecto no tiene tests automáticos; se saltó.
 - **Migrations check:** `<command>`: <result> | `none`.
 - **Lint/format:** `<command>`: <result> | sin archivos que revisar | `none`.
 - **Type check:** `<command>`: <result> | `none`.
@@ -89,7 +93,7 @@ Then write the `## Pruebas` section of the `Traceability` file. Create the file 
 - **Huella:** sha256:<hex>
 ```
 
-The `Alineación del plugin` line comes from section 1.4: `ok` on exit 0 (with `; Extra (info): <rules>` when the script printed that line); on exit 1, `<resumen>` is the script's lines after `desalineado`, joined with `; ` (for example `Faltan: Bash(gh pr ready:*); Plugin: no habilitado`); on exit 2, the script's error line.
+The `Alineación del plugin` line comes from section 1.4: `ok` on exit 0 (with `; Extra (info): <rules>` when the script printed that line); on exit 1, `<resumen>` is the script's lines after `desalineado`, joined with `; ` (for example `Faltan: Bash(gh pr merge:*); Plugin: no habilitado`); on exit 2, the script's error line.
 
 The `Huella` line goes last, right after `Huella de código` when there is one. `/close` compares them with new fingerprints to decide whether to rerun anything.
 

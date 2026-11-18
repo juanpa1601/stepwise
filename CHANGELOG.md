@@ -4,6 +4,14 @@ Changes to the `stepwise` plugin. The format follows [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-18
+
+### Added
+- **The `/regression` skill:** runs `Tests (full)` once on `<feature>`, with every step merged, in the background from the main session (`run_tests.py full --timeout 3600`, with a manual fallback). When green, it writes `regression.md`, commits and pushes it on `<feature>`, and it is the only skill that takes the main PR out of draft. When red, it fixes nothing and proposes a correction step with `/spec`.
+
+### Changed
+- **Major:** `/check` and `/close` run only the step's tests (the ones `/implement` lists under `### Tests del paso`), never `Tests (full)`, and the last `/close` leaves the main PR in draft and asks for `/regression`. A project in the middle of a feature when it updates: `/check` builds the list for a step that has none, and the main PR leaves draft through `/regression`.
+
 ## [1.1.0] - 2026-11-10
 
 ### Added
@@ -27,6 +35,7 @@ First public release.
 - **Manual criteria** `(manual: <motivo>)`, projects without tests (`none`) and `después del merge` verifications.
 - **The `ask` rule list** in `references/ask-rules.json`, which `/check` compares with the project's `.claude/settings.json`.
 
-[Unreleased]: https://github.com/juanpa1601/stepwise/compare/stepwise--v1.1.0...main
+[Unreleased]: https://github.com/juanpa1601/stepwise/compare/stepwise--v2.0.0...main
+[2.0.0]: https://github.com/juanpa1601/stepwise/compare/stepwise--v1.1.0...stepwise--v2.0.0
 [1.1.0]: https://github.com/juanpa1601/stepwise/compare/stepwise--v1.0.0...stepwise--v1.1.0
 [1.0.0]: https://github.com/juanpa1601/stepwise/releases/tag/stepwise--v1.0.0

@@ -1,7 +1,7 @@
 ---
 name: implement
 description: >-
-  Implements step <n> of the current feature's ADR on a new branch <feature>-step-<n>. For each acceptance criterion of the step it writes the test first (for a bug, it records that the regression test fails before the fix), then the code, and runs the step's tests with stepwise:test-runner until green; with "Tests (step) none", or for a criterion the ADR marks "(manual: <reason>)", it records a manual verification for that criterion instead. Then runs lint and type check. Stops and proposes an ADR change when the step is incomplete or wrong. Does not commit.
+  Implements step <n> of the current feature's ADR on a new branch <feature>-step-<n>. For each acceptance criterion of the step it writes the test first (for a bug, it records that the regression test fails before the fix), then the code, and runs the step's tests with stepwise:test-runner until green, recording their paths under "Tests del paso" in the step's traceability for /check and /close; with "Tests (step) none", or for a criterion the ADR marks "(manual: <reason>)", it records a manual verification for that criterion instead. Then runs lint and type check. Stops and proposes an ADR change when the step is incomplete or wrong. Does not commit.
 argument-hint: <step number>
 disable-model-invocation: true
 ---
@@ -82,7 +82,9 @@ Only if the ADR type is `bug`, and before touching any code:
      - Ejecutó: Claude | usuario | pendiente | después del merge
    ```
 3. **Run it yourself** when you can. If it needs the user, leave `Obtenido: pendiente de confirmar por el usuario`, say so in the report and ask them to run it. If it needs a command only the user can type (a `/stepwise:` skill is user-only), `Pasos` gives that exact command with its arguments, and the report asks for it in one line. A failing verification is fixed like a red test.
-4. **After the merge.** Only when the verification **cannot** run before the step is merged (it needs the merged branch, a deploy, or the step's own `/close`), mark it `Ejecutó: después del merge` and write the reason in `Obtenido`. `/close` does not block the merge on it: it adds it to the main PR checklist, and the last step's `/close` keeps the main PR in draft until it is confirmed. A `pendiente` one still blocks the merge.
+4. **After the merge.** Only when the verification **cannot** run before the step is merged (it needs the merged branch, a deploy, or the step's own `/close`), mark it `Ejecutó: después del merge` and write the reason in `Obtenido`. `/close` does not block the merge on it: it adds it to the main PR checklist, and `/regression` keeps the main PR in draft until it is confirmed. A `pendiente` one still blocks the merge.
+
+**Step tests list.** When every CA is done, write in the `Traceability` file, under `## Pruebas` → `### Tests del paso` (create the file or the section if missing; keep any other section; the subsection goes before `### Verificación manual`), the paths or ids you passed to `test-runner step` in sections 3 and 4: the tests created or modified in the step, one per line as ``- `<path or id>` ``. If there is none (every CA is manual, or `Tests (step): none`), write `ninguno`. `/check` and `/close` run exactly this list, never the full suite.
 
 ## 5. Lint and type check
 
@@ -102,6 +104,7 @@ Step <n> of <feature> on <feature>-step-<n> (not committed).
 Files: <path>, <path>, ...
 CA-1: <test id> — green | manual — ok | manual — pending user | manual — after merge
 CA-2: <test id> — green | manual — ok | manual — pending user | manual — after merge
+Step tests: <N> in "Tests del paso" of <Traceability file> | ninguno
 Regression evidence: <Traceability file> (only for a bug)
 No automated tests: manual verifications in <Traceability file> (only with Tests (step): none)
 Pending user: CA-<n>: type `<exact command>` (or run <steps>) and tell me the result (only if one is pending)
