@@ -23,6 +23,7 @@ REQUIRED_IDS = {
     "test-runner-foreground",
     "git-rules",
     "push-https",
+    "step-tests",
 }
 MARKER = re.compile(r"<!-- (/?)shared:([a-z0-9-]+) -->")
 NO_NESTING = "los bloques compartidos no se anidan ni se solapan"
@@ -288,6 +289,24 @@ class RepoSharedBlocksTest(unittest.TestCase):
         self.assertEqual(errors, [], "bloques compartidos inválidos")
         self.assertEqual(
             REQUIRED_IDS - ids, set(), "faltan bloques compartidos"
+        )
+
+    def test_step_tests_lives_in_check_and_close(self) -> None:
+        """ADR release-2.0.0, CA-8"""
+        errors: list[str] = []
+        paths = {
+            copy.path
+            for path, text in repo_files().items()
+            for copy in _parse(path, text, errors)
+            if copy.id == "step-tests"
+        }
+        self.assertEqual(errors, [], "bloques compartidos inválidos")
+        self.assertEqual(
+            paths,
+            {
+                "plugins/stepwise/skills/check/SKILL.md",
+                "plugins/stepwise/skills/close/SKILL.md",
+            },
         )
 
 
