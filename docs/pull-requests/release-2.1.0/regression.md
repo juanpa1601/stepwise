@@ -14,3 +14,4 @@
 - **Ejecutó:** segundo plano (`run_tests.py full --timeout 3600`)
 - **Fallos preexistentes que se dejaron:** ninguno
 - **Verificaciones después del merge:** 1 sin marcar: paso 3, CA-12 (sesión real sin Docker de `/stepwise:worktree new` y `remove`)
+- **Ready sin confirmar:** quedaron sin confirmar la verificación después del merge del paso 3 (CA-12) y la sección "Verificación de instalación" del PR principal; el usuario decidió marcar el PR ready igual y correrlas después, 2026-11-21.
