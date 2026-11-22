@@ -58,7 +58,7 @@ El objetivo es publicar `2.1.0`:
 - **CA-13 (manual: documentación):** Dada `docs/worktrees.md`, cuando se lee, entonces:
   - está en inglés, con las secciones 1 a 9 (qué es un worktree, paso a paso, qué nace vacío, Docker en paralelo, rendimiento, integración, limpieza, checklist con problemas comunes y lo no verificado);
   - ofrece `/stepwise:worktree` en las secciones 2, 7 y 8 y conserva los comandos a mano;
-  - los recuadros **In this repo** hablan de stepwise (instalación `local`, `README.md:87-88`, y `--plugin-dir`; versión, test de versión y `CHANGELOG`);
+  - los recuadros **In this repo** hablan de stepwise (instalación `local`, `README.md:90-91`, y `--plugin-dir`; versión, test de versión y `CHANGELOG`);
   - cada `ruta:línea` que cita apunta a stepwise y es correcta.
 - **CA-14 (manual: documentación):** Dados `plugins/stepwise/README.md`, `README.md`, `plugin.json`, `.claude-plugin/marketplace.json` y `CHANGELOG.md`, cuando se leen, entonces:
   - el README del plugin tiene la entrada de `skills/worktree/` (`new`, `remove`, script), `worktree` en "Today" de `project-commands` y `git-rules`, el `discover` del script en los tests y la versión `2.1.0`;
