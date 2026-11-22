@@ -4,6 +4,8 @@ Changes to the `stepwise` plugin. The format follows [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-21
+
 ### Added
 - **The `/worktree` skill**, user-invoked only, with a guide in [`docs/worktrees.md`](docs/worktrees.md): `new <folder>` creates a `--detach` worktree from `origin/<Base branch>` in `../<folder>`, creates the `.venv` if `Lint/format` uses it, gives the command to copy the environment files and enters it with `EnterWorktree`; `remove <folder>`, once the main PR is merged, takes the test compose down with `-p <worktree project>`, `rm -s -v -f` and `down --rmi local`, with the user's yes deletes only the volumes with that project's label and prefix (it stops if a container of that project belongs to another folder), and removes the worktree without deleting the branch or using `--force`.
 - **The `skills/worktree/scripts/worktree_check.py` script**, read-only and offline, used by `/worktree`. `new <folder>` validates `../<folder>` (the name, that it doesn't exist, and that its Docker Compose project name isn't another worktree's, a `-p` or `--project-directory` of the commands, a top-level `name:` or the folder of a compose file outside the root) and reports the `.venv`, the test compose files and the environment files to copy, by name only. `remove <folder>` checks a registered worktree with a branch and reports its feature, its Compose project and the compose calls to take down.
@@ -42,7 +44,8 @@ First public release.
 - **Manual criteria** `(manual: <motivo>)`, projects without tests (`none`) and `después del merge` verifications.
 - **The `ask` rule list** in `references/ask-rules.json`, which `/check` compares with the project's `.claude/settings.json`.
 
-[Unreleased]: https://github.com/juanpa1601/stepwise/compare/stepwise--v2.0.0...main
+[Unreleased]: https://github.com/juanpa1601/stepwise/compare/stepwise--v2.1.0...main
+[2.1.0]: https://github.com/juanpa1601/stepwise/compare/stepwise--v2.0.0...stepwise--v2.1.0
 [2.0.0]: https://github.com/juanpa1601/stepwise/compare/stepwise--v1.1.0...stepwise--v2.0.0
 [1.1.0]: https://github.com/juanpa1601/stepwise/compare/stepwise--v1.0.0...stepwise--v1.1.0
 [1.0.0]: https://github.com/juanpa1601/stepwise/releases/tag/stepwise--v1.0.0
