@@ -1,11 +1,14 @@
 # Changelog
 
-Changes to the `stepwise` plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer](https://semver.org/) with the [versioning rule](plugins/stepwise/README.md#versionado).
+Changes to the `stepwise` plugin. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [SemVer](https://semver.org/) with the [versioning rule](plugins/stepwise/README.md#versioning).
 
 ## [Unreleased]
 
 ### Added
 - **The `skills/worktree/scripts/worktree_check.py` script**, read-only and offline, for the coming `/worktree` skill. `new <folder>` validates `../<folder>` (the name, that it doesn't exist, and that its Docker Compose project name isn't another worktree's, a `-p` or `--project-directory` of the commands, a top-level `name:` or the folder of a compose file outside the root) and reports the `.venv`, the test compose files and the environment files to copy, by name only. `remove <folder>` checks a registered worktree with a branch and reports its feature, its Compose project and the compose calls to take down.
+
+### Changed
+- **The plugin README is now in English**, like the root README and this CHANGELOG. The section names and markers the skills write (`## Pruebas`, `### Tests del paso`, `después del merge`…) don't change and are quoted verbatim. The `Versionado` section is now `Versioning` (`#versioning`).
 
 ## [2.0.0] - 2026-11-18
 
