@@ -254,7 +254,7 @@ class RepoVersionTests(unittest.TestCase):
 
     def test_stepwise_manifest_has_semver_version(self) -> None:
         version = current_version(REPO_ROOT)
-        self.assertEqual(version, "2.0.0")
+        self.assertEqual(version, "2.1.0")
         assert version is not None
         self.assertRegex(version, SEMVER)
 

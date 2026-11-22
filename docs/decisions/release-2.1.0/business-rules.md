@@ -18,7 +18,7 @@ El objetivo es publicar `2.1.0`:
 
 ## 2. Criterios de Aceptación
 **Paso 1: script `worktree_check.py`** (solo lectura, sin red, biblioteca estándar, Python 3.10+)
-- **CA-1:** Dada una copia principal con `## Project commands` y una `<carpeta>` válida y nueva, cuando se corre `worktree_check.py new <carpeta>` desde su raíz, entonces sale con 0 e imprime `ok`, `Carpeta:` (ruta absoluta de `../<carpeta>`), `Proyecto:` (el nombre normalizado como lo hace Compose), `venv:`, `compose:`, `Proyecto fijo:` y `Entorno:`.
+- **CA-1:** Dada una copia principal con `## Project commands` y una `<carpeta>` válida y nueva, cuando se corre `worktree_check.py new <carpeta>` desde su raíz, entonces sale con 0 e imprime `ok`, `Carpeta:` (ruta absoluta de `../<carpeta>`), `Proyecto:` (el nombre normalizado como lo hace Compose), `venv:`, `compose:`, `Proyecto fijo:` (lo que fija un mismo proyecto para todos los worktrees: `-p`, `--project-directory`, `name:` o la carpeta de un compose fuera de la raíz) y `Entorno:`.
 - **CA-2:** Dada una `<carpeta>` inválida, cuando se corre `new`, entonces sale con 1, `error: <motivo>` en stderr, y nada cambia. Inválida es:
   - fuera de `^[a-z0-9][a-z0-9_-]*$`, o `../<carpeta>` ya existe;
   - su nombre de proyecto normalizado es el de otro worktree (la copia principal incluida);
@@ -29,7 +29,7 @@ El objetivo es publicar `2.1.0`:
   - los `env_file:` con ruta relativa que caen dentro de la copia principal y que git no versiona, con ` (sin ignorar)` si git no los ignora;
   - los ignorados llamados `.env` o `.env.*`, sin bajar a carpetas ignoradas enteras y sin `.env.example`, `.env.sample`, `.env.template` ni `.env.dist`;
   - `ninguno` si no hay.
-- **CA-6:** Dado `remove <carpeta>`, cuando `../<carpeta>` es un worktree registrado, no la copia principal y con rama, entonces sale con 0 e imprime `Carpeta:`, `Rama:`, `Feature:` (la rama, o `<feature>` de `<feature>-step-<n>`), `Proyecto:`, `compose:` (del `CLAUDE.md` del worktree) y `Llamadas compose:` (los `-f` de cada llamada, juntos y entre comillas de shell). Sale con 1 si no está registrado, es la copia principal, tiene HEAD separado o, con compose, por los mismos rechazos de proyecto de CA-2 (también un nombre que normalizado queda vacío).
+- **CA-6:** Dado `remove <carpeta>`, cuando `../<carpeta>` es un worktree registrado, no la copia principal y con rama, entonces sale con 0 e imprime `Carpeta:`, `Rama:`, `Feature:` (la rama, o `<feature>` de `<feature>-step-<n>`), `Proyecto:`, `compose:` (del `CLAUDE.md` del worktree) y `Llamadas compose:` (los `-f` de cada llamada, juntos y entre comillas de shell). Sale con 1 si no está registrado, su carpeta ya no existe, es la copia principal, tiene HEAD separado o, con compose, por los mismos rechazos de proyecto de CA-2 (también un nombre que normalizado queda vacío).
 - **CA-7:** Dada una corrida fuera de la raíz de la copia principal, cuando se corre cualquiera de los modos, entonces sale con 1. Un uso incorrecto, un `CLAUDE.md` sin `## Project commands` o un fallo de git salen con 2.
 - **CA-8:** Dado el paso 1 hecho, cuando corre `Tests (full)`, entonces pasa con el `discover` de `plugins/stepwise/skills/worktree/scripts/tests` en `CLAUDE.md:3`, `2.1.0` en `plugin.json` y en `tests/test_plugin_version.py:257`, y la viñeta `Added` del script en `[Unreleased]`.
 
@@ -72,7 +72,10 @@ El objetivo es publicar `2.1.0`:
 
 ## 3. Reglas de Negocio Clave
 1. **Saneamiento** (usuario, no negociable): igual que en `release-2.0.0`. Nada nombra el repo de origen, su organización, sus proyectos, su sandbox, sus PR, sus commits, sus ADR ni sus CA, rutas locales ni personas, tampoco en docstrings ni tests. Los docstrings de los tests citan los CA de este ADR. Las fuentes y los términos están en la memoria privada de Claude, fuera del repo.
-2. **Mismo comportamiento que el origen:** el script y la skill se traen con los nombres de stepwise (`/stepwise:worktree`, `plugins/stepwise/`). Las líneas que imprime el script (`Carpeta:`, `Proyecto fijo:`, `Entorno: ninguno`, `(sin ignorar)`…) quedan en español, como los demás marcadores del plugin.
+2. **Mismo comportamiento que el origen:** el script y la skill se traen con los nombres de stepwise (`/stepwise:worktree`, `plugins/stepwise/`). Las líneas que imprime el script (`Carpeta:`, `Proyecto fijo:`, `Entorno: ninguno`, `(sin ignorar)`…) quedan en español, como los demás marcadores del plugin. Tres cambios elegidos en la revisión del paso 1 (usuario):
+   - `Proyecto fijo:` también lista `carpeta de <compose>` por cada compose fuera de la raíz;
+   - `remove` de un worktree registrado cuya carpeta ya no existe sale con 1 y sugiere `git worktree prune`;
+   - los rechazos citan la guía con su URL de GitHub (regla 3).
 3. **Enlace a la guía:** la skill corre en otros proyectos, así que enlaza `docs/worktrees.md` con su URL de GitHub en `juanpa1601/stepwise`, y sus explicaciones no citan reglas de un ADR.
 4. **Archivos de entorno:** la skill nunca los lee ni los nombra en un comando suyo; solo imprime el `cp` para el usuario. Los hooks no cambian (`block_env_access` niega cualquier comando que los nombre).
 5. **Texto prohibido:** la `SKILL.md` nueva no contiene `gh pr ready`, ni `run_tests.py` con `full`, ni `test-runner` con `"full"` (`tests/test_full_suite_owner.py`), tampoco en prosa.
