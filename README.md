@@ -18,6 +18,9 @@ Each step runs only its own tests. Once every step is merged, `regression` runs 
 | Review | `/stepwise:audit self \| comments [<pr>] \| pr <pr>` | `self` reviews the step's diff and fixes blockers; `comments` triages a PR's unresolved review comments; `pr` drafts a review of someone else's PR. Never posts to GitHub without your approval. |
 | Close | `/stepwise:close` | Runs `/audit self` if needed, completes the traceability, commits, pushes, opens and merges the Sub-PR into the feature branch, and ticks the step in the main PR. The last one leaves the main PR in draft. |
 | Regression | `/stepwise:regression` | Runs the full suite once on the feature branch, in the background, after every step is merged. When green, records the run and asks before taking the main PR out of draft; when red, fixes nothing and proposes a correction step with `/spec`. |
+| Worktrees | `/stepwise:worktree new <folder> \| remove <folder>` | Creates a `--detach` worktree from `origin/<Base branch>` in `../<folder>`, with its `.venv` if `Lint/format` uses one, the command to copy the environment files and the session inside it; once the main PR is merged, takes down the test compose and removes it without deleting the branch. |
+
+A working copy carries one feature at a time. To carry several in parallel, use one worktree per feature: see [docs/worktrees.md](docs/worktrees.md), or `/stepwise:worktree new <folder>`.
 
 You chain the stages yourself: the skills are user-invoked only (`disable-model-invocation`), so Claude never starts one on its own. When no other command uses the name, the short form works too (`/spec`, `/check`…).
 
